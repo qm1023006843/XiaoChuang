@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<title>小窗</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="小窗">
+<meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1816" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAABxklEQVR42u3csQ0AEBBA0ZtGobCcZaxmG41SpXGSl/wBhNe44qLVIh0LVyA4BIfgEByCQ3AIDsEhOASHBIfgEByCQ3AIDsEhOASH4JDgEByCQ3AIDsEhOASH4BAcEhyCQ3AIDsEhOATHbo6ui+AQHIIDDjjggAMOOOCAIxeOtx/6bEeCAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjg8BhxwwAEHHHDAAQcccMABBxxwwAEHHHDAAQcccMABBxxwwAEHHHDAAQcccMABBxxwwAEHHHDAIeut4YADDjjggAMOOOCAAw44zDnMOeCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOP7CIRuM4YADDjjggAMOOOCAAw448uLQL8EhOASH4BAcgkNwCA7BITgEhwSH4BAcgkNwCA7BITgEh+CQ4BAcgkNwCA7BITgEh+AQHBIcgkNwCA7BITiUtAW5NMNoFxHqOAAAAABJRU5ErkJggg==">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAABxklEQVR42u3csQ0AEBBA0ZtGobCcZaxmG41SpXGSl/wBhNe44qLVIh0LVyA4BIfgEByCQ3AIDsEhOASHBIfgEByCQ3AIDsEhOASH4JDgEByCQ3AIDsEhOASH4BAcEhyCQ3AIDsEhOATHbo6ui+AQHIIDDjjggAMOOOCAIxeOtx/6bEeCAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjg8BhxwwAEHHHDAAQcccMABBxxwwAEHHHDAAQcccMABBxxwwAEHHHDAAQcccMABBxxwwAEHHHDAIeut4YADDjjggAMOOOCAAw44zDnMOeCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOOCAAw444IADDjjggAMOOP7CIRuM4YADDjjggAMOOOCAAw448uLQL8EhOASH4BAcgkNwCA7BITgEhwSH4BAcgkNwCA7BITgEh+CQ4BAcgkNwCA7BITgEh+AQHBIcgkNwCA7BITiUtAW5NMNoFxHqOAAAAABJRU5ErkJggg==">
+<style>
+:root{
+  --bg:#faf8f5; --bg-2:#f2eee8; --bg-3:#e8e2d9;
+  --fg:#2e2a26; --fg-2:#6b625a; --fg-3:#9a8f84;
+  --line:#e0d8cc; --line-2:#cec4b6;
+  --accent:#a8654a; --accent-soft:#f0e0d6;
+  --user-bg:#eae3d8; --ai-bg:transparent;
+  --danger:#a34a3c; --ok:#4a7a52;
+  --radius:14px;
+  --topH:calc(50px + env(safe-area-inset-top, 0px));
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a1816; --bg-2:#232019; --bg-3:#2e2a24;
+    --fg:#ebe4da; --fg-2:#a89e92; --fg-3:#7a7167;
+    --line:#332e28; --line-2:#463f37;
+    --accent:#d99873; --accent-soft:#3a2b23;
+    --user-bg:#2b261f; --ai-bg:transparent;
+    --danger:#d97b6c; --ok:#7fae86;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1a1816; --bg-2:#232019; --bg-3:#2e2a24;
+  --fg:#ebe4da; --fg-2:#a89e92; --fg-3:#7a7167;
+  --line:#332e28; --line-2:#463f37;
+  --accent:#d99873; --accent-soft:#3a2b23;
+  --user-bg:#2b261f; --ai-bg:transparent;
+  --danger:#d97b6c; --ok:#7fae86;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 var(--sans);
+  -webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+input,textarea,select{font:inherit;color:inherit}
+
+/* ---------- layout ---------- */
+#app{display:flex;height:100dvh;overflow:hidden}
+
+/* sidebar */
+#side{width:250px;flex:0 0 250px;background:var(--bg-2);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;transition:margin-left .22s ease}
+#side.hidden{margin-left:-250px}
+.side-head{padding:14px 12px 10px;display:flex;align-items:center;gap:8px}
+.brand{font-size:16px;font-weight:600;letter-spacing:.06em;color:var(--accent)}
+.brand small{font-weight:400;font-size:11px;color:var(--fg-3);letter-spacing:.02em;margin-left:6px}
+#newChat{margin:0 12px 10px;padding:9px 12px;border:1px dashed var(--line-2);border-radius:10px;
+  color:var(--fg-2);font-size:13.5px;text-align:center;transition:.15s}
+#newChat:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+#convList{flex:1;overflow-y:auto;padding:0 8px 8px}
+.conv{padding:9px 10px;border-radius:9px;margin-bottom:2px;cursor:pointer;
+  display:flex;align-items:center;gap:6px;color:var(--fg-2);font-size:13.5px}
+.conv:hover{background:var(--bg-3)}
+.conv.active{background:var(--bg-3);color:var(--fg);font-weight:500}
+.conv .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv .x{opacity:0;color:var(--fg-3);font-size:15px;line-height:1;padding:2px 4px;border-radius:5px;flex:0 0 auto}
+.conv:hover .x{opacity:1}
+.conv .x:hover{color:var(--danger);background:var(--bg)}
+.side-foot{border-top:1px solid var(--line);display:flex;gap:4px;flex-wrap:wrap;
+  padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+.side-foot button{flex:1;min-width:60px;padding:7px 6px;border-radius:8px;font-size:12px;color:var(--fg-2);text-align:center}
+.side-foot button:hover{background:var(--bg-3);color:var(--fg)}
+#storeBar{padding:0 10px 8px;font-size:11px;color:var(--fg-3)}
+#storeBar .track{height:3px;background:var(--bg-3);border-radius:2px;overflow:hidden;margin-top:4px}
+#storeBar .fill{height:100%;background:var(--accent);width:0%;transition:width .3s}
+#storeBar.warn .fill{background:var(--danger)}
+
+/* main */
+#main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+#top{height:var(--topH);flex:0 0 auto;border-bottom:1px solid var(--line);display:flex;
+  align-items:center;gap:10px;padding:env(safe-area-inset-top,0px) 14px 0;
+  background:var(--bg);z-index:5}
+.icobtn{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  color:var(--fg-2);flex:0 0 auto}
+.icobtn:hover{background:var(--bg-3);color:var(--fg)}
+.icobtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+#title{flex:1;min-width:0;font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;padding:4px 6px;border-radius:6px;outline:none}
+#title:focus{background:var(--bg-3)}
+#modelTag{font-size:11.5px;color:var(--fg-3);font-family:var(--mono);flex:0 0 auto;
+  max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* messages */
+#scroll{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
+#msgs{max-width:760px;margin:0 auto;padding:26px 20px 12px}
+.msg{margin-bottom:22px;display:flex;flex-direction:column}
+.msg .who{font-size:11px;color:var(--fg-3);letter-spacing:.08em;margin-bottom:5px;
+  display:flex;align-items:center;gap:8px}
+.msg .who .acts{opacity:0;display:flex;gap:2px;transition:opacity .15s}
+.msg:hover .who .acts{opacity:1}
+.msg .who .acts button{font-size:11px;color:var(--fg-3);padding:1px 5px;border-radius:4px}
+.msg .who .acts button:hover{background:var(--bg-3);color:var(--fg)}
+.bubble{border-radius:var(--radius);padding:11px 15px;overflow-wrap:anywhere}
+.msg.user .bubble{background:var(--user-bg);align-self:flex-start;max-width:100%}
+.msg.ai .bubble{background:var(--ai-bg);padding-left:0;padding-right:0}
+.msg.err .bubble{background:transparent;border:1px solid var(--danger);color:var(--danger);
+  font-size:13.5px;font-family:var(--mono);white-space:pre-wrap}
+.bubble>*:first-child{margin-top:0}
+.bubble>*:last-child{margin-bottom:0}
+.bubble p{margin:.65em 0}
+.bubble h1,.bubble h2,.bubble h3{margin:1.1em 0 .5em;line-height:1.35;font-weight:600}
+.bubble h1{font-size:1.32em}.bubble h2{font-size:1.18em}.bubble h3{font-size:1.05em}
+.bubble ul,.bubble ol{margin:.65em 0;padding-left:1.5em}
+.bubble li{margin:.25em 0}
+.bubble code{font-family:var(--mono);font-size:.88em;background:var(--bg-3);
+  padding:.12em .38em;border-radius:5px}
+.bubble pre{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;overflow-x:auto;margin:.8em 0;position:relative}
+.bubble pre code{background:none;padding:0;font-size:12.8px;line-height:1.6}
+.bubble pre .cp{position:absolute;top:6px;right:8px;font-size:11px;color:var(--fg-3);
+  padding:2px 6px;border-radius:5px;opacity:0;transition:.15s}
+.bubble pre:hover .cp{opacity:1}
+.bubble pre .cp:hover{background:var(--bg-3);color:var(--fg)}
+.bubble blockquote{margin:.7em 0;padding-left:14px;border-left:2px solid var(--line-2);color:var(--fg-2)}
+.bubble a{color:var(--accent)}
+.bubble hr{border:none;border-top:1px solid var(--line);margin:1.2em 0}
+.bubble table{border-collapse:collapse;margin:.8em 0;font-size:13.5px;display:block;overflow-x:auto}
+.bubble th,.bubble td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+.bubble th{background:var(--bg-2);font-weight:600}
+/* thinking block */
+.think{margin-bottom:10px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg-2);overflow:hidden}
+.think summary{list-style:none;cursor:pointer;padding:8px 12px;font-size:12px;
+  color:var(--fg-3);display:flex;align-items:center;gap:7px;user-select:none}
+.think summary::-webkit-details-marker{display:none}
+.think summary:hover{color:var(--fg-2)}
+.tk-ico{width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;transition:transform .18s;flex:0 0 auto}
+.think[open] .tk-ico{transform:rotate(90deg)}
+.tk-n{margin-left:auto;font-family:var(--mono);font-size:10.5px;opacity:.75}
+.think-body{padding:10px 14px 12px;font-size:13px;line-height:1.8;color:var(--fg-2);
+  white-space:pre-wrap;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.think.live summary{color:var(--accent)}
+
+.cursor{display:inline-block;width:7px;height:1.05em;background:var(--accent);
+  vertical-align:text-bottom;animation:bl 1s steps(2) infinite;border-radius:1px}
+@keyframes bl{0%,50%{opacity:1}50.1%,100%{opacity:0}}
+.usage{font-size:11px;color:var(--fg-3);font-family:var(--mono);margin-top:6px}
+.tag-ed{font-size:10px;color:var(--fg-3);border:1px solid var(--line);border-radius:4px;
+  padding:0 4px;line-height:1.5;opacity:.85}
+
+/* branch switcher */
+.br{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:7px;
+  overflow:hidden;margin-left:2px;background:var(--bg)}
+.br button{padding:1px 7px;font-size:12px;color:var(--fg-3);line-height:1.7}
+.br button:hover:not(:disabled){background:var(--bg-3);color:var(--accent)}
+.br button:disabled{opacity:.28;cursor:default}
+.br .n{font-size:10.5px;color:var(--fg-2);font-family:var(--mono);padding:0 5px;
+  border-left:1px solid var(--line);border-right:1px solid var(--line);letter-spacing:.02em}
+.br .rm{color:var(--fg-3);font-size:11px}
+.br .rm:hover{background:var(--danger)!important;color:#fff!important}
+
+/* inline editing */
+.edit textarea{width:100%;background:var(--bg-2);border:1px solid var(--accent);border-radius:12px;
+  padding:12px 15px;outline:none;resize:vertical;min-height:84px;line-height:1.7;
+  font-size:14.5px;font-family:inherit;color:var(--fg);display:block}
+.edit-row{display:flex;gap:7px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.mini{font-size:12px;padding:5px 12px;border-radius:8px;border:1px solid var(--line-2);color:var(--fg-2)}
+.mini:hover{background:var(--bg-2);color:var(--fg)}
+.mini.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
+.mini.primary:hover{opacity:.9;background:var(--accent);color:#fff}
+.mini.warn{color:var(--danger);border-color:var(--danger)}
+.mini.warn:hover{background:var(--danger);color:#fff}
+.edit-hint{font-size:10.5px;color:var(--fg-3);margin-left:auto;white-space:nowrap}
+@media (max-width:520px){ .edit-hint{display:none} }
+
+/* composer */
+#composer{border-top:1px solid var(--line);background:var(--bg);flex:0 0 auto;
+  padding:12px 20px calc(16px + env(safe-area-inset-bottom,0px))}
+#cwrap{max-width:760px;margin:0 auto;position:relative;border:1px solid var(--line-2);
+  border-radius:var(--radius);background:var(--bg-2);transition:border-color .15s}
+#cwrap:focus-within{border-color:var(--accent)}
+#input{width:100%;background:none;border:none;outline:none;resize:none;padding:13px 52px 13px 15px;
+  max-height:200px;min-height:46px;line-height:1.6;display:block;font-size:15px}
+#send{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:9px;
+  background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center}
+#send:disabled{opacity:.3;cursor:default}
+#send svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+#send.stop{background:var(--danger)}
+#hint{max-width:760px;margin:7px auto 0;font-size:11px;color:var(--fg-3);display:flex;
+  justify-content:space-between;gap:10px;align-items:center}
+#hintL{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+
+/* thinking pill */
+.pill{border:1px solid var(--line-2);border-radius:999px;padding:2.5px 10px;font-size:11px;
+  color:var(--fg-3);display:inline-flex;align-items:center;gap:5px;transition:.15s;white-space:nowrap}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+.pill.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:500}
+.pill .dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.45}
+.pill.on .dot{opacity:1}
+
+/* context pressure bar */
+#ctxBar{max-width:760px;margin:0 auto 9px;display:none;align-items:center;gap:10px;
+  font-size:11.5px;color:var(--fg-2);background:var(--bg-2);border:1px solid var(--line-2);
+  border-radius:10px;padding:8px 12px}
+#ctxBar.on{display:flex}
+#ctxBar.hot{border-color:var(--accent)}
+#ctxBar .txt{flex:1;min-width:0}
+#ctxBar button{font-size:11.5px;color:var(--accent);padding:3px 9px;border-radius:7px;
+  border:1px solid var(--accent);white-space:nowrap}
+#ctxBar button:hover{background:var(--accent);color:#fff}
+#ctxBar .dismiss{color:var(--fg-3);border:none;padding:3px 5px}
+#ctxBar .dismiss:hover{background:var(--bg-3);color:var(--fg)}
+
+/* summary divider in transcript */
+.sumline{display:flex;align-items:center;gap:10px;margin:6px 0 24px;color:var(--fg-3);font-size:11.5px}
+.sumline::before,.sumline::after{content:"";flex:1;height:1px;background:var(--line)}
+.msg.folded{opacity:.42}
+.sumcard{border:1px dashed var(--line-2);border-radius:11px;padding:11px 14px;margin-bottom:24px;
+  background:var(--bg-2);font-size:13px;line-height:1.75;color:var(--fg-2)}
+.sumcard .hd{font-size:11px;color:var(--fg-3);letter-spacing:.06em;margin-bottom:6px;
+  display:flex;align-items:center;gap:8px}
+.sumcard .hd button{font-size:11px;color:var(--fg-3);margin-left:auto;padding:1px 6px;border-radius:5px}
+.sumcard .hd button:hover{background:var(--bg-3);color:var(--danger)}
+
+/* stats */
+#statWrap{max-height:52vh;overflow-y:auto;margin:-4px -4px 0;padding:4px}
+.stat-top{display:flex;gap:9px;margin-bottom:16px}
+.stat-card{flex:1;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+.stat-card .k{font-size:10.5px;color:var(--fg-3);letter-spacing:.06em}
+.stat-card .v{font-size:19px;font-weight:600;margin-top:3px;font-family:var(--mono)}
+.stat-card .v small{font-size:11px;font-weight:400;color:var(--fg-3);margin-left:3px}
+table.st{width:100%;border-collapse:collapse;font-size:12.5px}
+table.st th{text-align:left;font-weight:500;color:var(--fg-3);font-size:11px;
+  padding:6px 8px;border-bottom:1px solid var(--line);letter-spacing:.04em}
+table.st td{padding:7px 8px;border-bottom:1px solid var(--line)}
+table.st td.n{text-align:right;font-family:var(--mono);font-size:12px;white-space:nowrap}
+table.st tr:last-child td{border-bottom:none}
+table.st .mdl{font-family:var(--mono);font-size:11.5px;overflow-wrap:anywhere}
+table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:6px;
+  padding:3px 6px;font-size:11.5px;text-align:right;font-family:var(--mono)}
+.spark{display:flex;align-items:flex-end;gap:2px;height:44px;margin:4px 0 2px}
+.spark i{flex:1;background:var(--accent);opacity:.65;border-radius:2px 2px 0 0;min-height:2px}
+.spark i:hover{opacity:1}
+.sect{font-size:11px;color:var(--fg-3);letter-spacing:.08em;margin:18px 0 7px}
+.muted{color:var(--fg-3);font-size:12px;line-height:1.7}
+
+/* settings modal */
+#mask,.mask2{position:fixed;inset:0;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#mask.on,.mask2.on{display:flex}
+#panel,#panel2{background:var(--bg);border:1px solid var(--line);border-radius:16px;width:100%;
+  max-width:520px;max-height:88dvh;overflow-y:auto;padding:22px 24px 24px;
+  box-shadow:0 18px 50px rgba(0,0,0,.28)}
+#panel2{max-width:600px}
+#panel h2,#panel2 h2{margin:0 0 3px;font-size:17px;font-weight:600}
+#panel .sub,#panel2 .sub{font-size:12.5px;color:var(--fg-3);margin-bottom:18px}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:12.5px;color:var(--fg-2);margin-bottom:5px;font-weight:500}
+.field input,.field textarea,.field select{width:100%;background:var(--bg-2);
+  border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;outline:none;font-size:14px}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:80px;line-height:1.6}
+.field .note{font-size:11.5px;color:var(--fg-3);margin-top:5px;line-height:1.55}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+.seg{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:10px;
+  border:1px solid var(--line-2)}
+.seg button{flex:1;padding:7px;border-radius:7px;font-size:13px;color:var(--fg-2);text-align:center}
+.seg button.on{background:var(--accent);color:#fff;font-weight:500}
+.panel-foot{display:flex;gap:9px;margin-top:20px}
+.btn{padding:10px 16px;border-radius:9px;font-size:14px;text-align:center;
+  border:1px solid var(--line-2);color:var(--fg-2)}
+.btn:hover{background:var(--bg-2);color:var(--fg)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500;flex:1}
+.btn.primary:hover{opacity:.9;background:var(--accent);color:#fff}
+#testOut{font-size:12.5px;font-family:var(--mono);margin-top:9px;padding:9px 11px;
+  border-radius:8px;background:var(--bg-2);display:none;white-space:pre-wrap;line-height:1.6}
+#testOut.on{display:block}
+#testOut.ok{color:var(--ok)}
+#testOut.bad{color:var(--danger)}
+
+/* empty state */
+#empty{position:absolute;inset:var(--topH) 0 0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;pointer-events:none;padding:30px;text-align:center}
+#empty .big{font-size:26px;color:var(--accent);letter-spacing:.18em;font-weight:300}
+#empty .small{font-size:13px;color:var(--fg-3);line-height:1.9;max-width:340px}
+#empty kbd{font-family:var(--mono);font-size:11.5px;background:var(--bg-3);
+  padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
+
+#toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,14px);background:var(--fg);
+  color:var(--bg);padding:9px 17px;border-radius:10px;font-size:13px;opacity:0;
+  transition:.2s;pointer-events:none;z-index:99;max-width:80vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* Touch: there is no hover, so controls that only appear on :hover would be
+   completely unreachable on a phone. Keep them visible, just dimmed. */
+@media (hover:none){
+  .msg .who .acts{opacity:.6}
+  .bubble pre .cp{opacity:.6}
+  .conv .x{opacity:.55}
+  .msg .who .acts button{padding:3px 7px}
+  .conv{padding:11px 10px}
+  /* iOS zooms the page when focusing anything under 16px */
+  #input,.field input,.field textarea,.field select,.edit textarea,table.st input{font-size:16px}
+  .br button{padding:4px 10px}
+}
+@media (max-width:720px){
+  #side{position:absolute;z-index:20;height:100%;box-shadow:2px 0 22px rgba(0,0,0,.18)}
+  #msgs{padding:20px 15px 10px}
+  #composer{padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+  #modelTag{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside id="side">
+    <div class="side-head"><span class="brand">小窗<small>自己的壳</small></span></div>
+    <button id="newChat">+ 新的对话</button>
+    <div id="convList"></div>
+    <div id="storeBar">
+      <span id="storeTxt">存储 —</span>
+      <div class="track"><div class="fill" id="storeFill"></div></div>
+    </div>
+    <div class="side-foot">
+      <button id="btnStats">用量</button>
+      <button id="btnExport">导出备份</button>
+      <button id="btnImport">导入</button>
+      <button id="btnTheme">主题</button>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div id="top">
+      <button class="icobtn" id="btnSide" title="侧栏">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div id="title" contenteditable="true" spellcheck="false"></div>
+      <span id="modelTag"></span>
+      <button class="icobtn" id="btnSet" title="设置">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+
+    <div id="scroll"><div id="msgs"></div></div>
+
+    <div id="empty">
+      <div class="big">小 窗</div>
+      <div class="small">没有服务器，没有埋点，没有第三方。<br>
+        这一页就是全部，稿子只在你自己机器上。<br><br>
+        <kbd>Enter</kbd> 发送 · <kbd>Shift+Enter</kbd> 换行</div>
+    </div>
+
+    <div id="composer">
+      <div id="ctxBar">
+        <span class="txt" id="ctxTxt"></span>
+        <button id="btnSum">压缩成摘要</button>
+        <button class="dismiss" id="ctxHide" title="这次先不管">×</button>
+      </div>
+      <div id="cwrap">
+        <textarea id="input" rows="1" placeholder="说点什么…"></textarea>
+        <button id="send" title="发送">
+          <svg viewBox="0 0 24 24" id="sendIco"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      </div>
+      <div id="hint">
+        <span id="hintL">
+          <button class="pill" id="pillThink" title="思考开关"><i class="dot"></i><span id="pillTxt">思考</span></button>
+          <span id="ctxMini"></span>
+        </span>
+        <span id="cnt"></span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="mask">
+  <div id="panel">
+    <h2>设置</h2>
+    <div class="sub">全部只存在这台机器的浏览器里，不上传任何地方。</div>
+
+    <div class="field">
+      <label>通道</label>
+      <div class="seg" id="segProv">
+        <button data-p="anthropic" class="on">Anthropic（已验证可直连）</button>
+        <button data-p="openai">OpenAI 兼容</button>
+      </div>
+      <div class="note" id="provNote"></div>
+    </div>
+
+    <div class="field" id="fBase" style="display:none">
+      <label>接口地址 Base URL</label>
+      <input id="iBase" placeholder="https://api.deepseek.com/v1" spellcheck="false">
+      <div class="note">填到 <code>/v1</code> 为止。常见：DeepSeek <code>https://api.deepseek.com/v1</code>、硅基流动 <code>https://api.siliconflow.cn/v1</code>、本地 Ollama <code>http://localhost:11434/v1</code>。</div>
+    </div>
+
+    <div class="field">
+      <label>API Key</label>
+      <input id="iKey" type="password" placeholder="sk-…" spellcheck="false" autocomplete="off">
+      <div class="note">存在本地 localStorage。谁能碰你这台机器谁就能看到，跟存记事本一个级别——机器别乱借。</div>
+    </div>
+
+    <div class="field">
+      <label>模型</label>
+      <div class="row">
+        <input id="iModel" placeholder="模型 ID" spellcheck="false" list="modelList">
+        <button class="btn" id="btnModels" style="flex:0 0 auto">拉列表</button>
+      </div>
+      <datalist id="modelList"></datalist>
+      <div class="note">不写死型号，点「拉列表」直接问接口要，永远不会过期。</div>
+    </div>
+
+    <div class="field">
+      <label>系统提示词（这个窗口的人设／规矩）</label>
+      <textarea id="iSys" placeholder="留空就是干净的默认状态。"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>最大回复长度</label>
+        <input id="iMax" type="number" min="256" max="64000" step="256">
+      </div>
+      <div class="field">
+        <label>携带上下文条数</label>
+        <input id="iCtx" type="number" min="2" max="200" step="2">
+        <div class="note">越大越贵。</div>
+      </div>
+    </div>
+
+    <div class="field" id="fThink">
+      <label>扩展思考</label>
+      <div class="row">
+        <select id="iThinkOn">
+          <option value="0">关</option>
+          <option value="1">开</option>
+        </select>
+        <input id="iThinkBudget" type="number" min="1024" max="60000" step="1024" placeholder="思考预算">
+      </div>
+      <div class="note" id="thinkNote"></div>
+    </div>
+
+    <button class="btn" id="btnTest" style="width:100%">连接自检</button>
+    <div id="testOut"></div>
+
+    <div class="panel-foot">
+      <button class="btn primary" id="btnSave">保存</button>
+      <button class="btn" id="btnClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="statMask" class="mask2">
+  <div id="panel2">
+    <h2>用量</h2>
+    <div class="sub">只统计这台机器上、从这个页面发出去的请求。不是账单，是你自己的流水。</div>
+    <div id="statWrap"></div>
+    <div class="panel-foot">
+      <button class="btn primary" id="btnStatClose">关闭</button>
+      <button class="btn" id="btnStatCsv">导出 CSV</button>
+      <button class="btn" id="btnStatClear">清空</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="fileIn" accept="application/json,.json" style="display:none">
+
+<script>
+"use strict";
+
+/* ============ storage (defensive: never let a browser wipe be silent) ============ */
+const KEY = "xiaochuang.v1";
+let memFallback = null;          // used when localStorage is unavailable
+let storageOK = true;
+
+function rawGet(){
+  if(!storageOK) return memFallback;
+  try{ return localStorage.getItem(KEY); }
+  catch(e){ storageOK = false; return memFallback; }
+}
+function rawSet(v){
+  if(storageOK){
+    try{ localStorage.setItem(KEY, v); return true; }
+    catch(e){
+      storageOK = false; memFallback = v;
+      toast("浏览器存储写不进去了（可能满了或被禁用）——请立刻「导出备份」");
+      return false;
+    }
+  }
+  memFallback = v; return false;
+}
+
+const DEFAULTS = {
+  provider:"anthropic",
+  baseURL:"https://api.deepseek.com/v1",
+  key:"",
+  model:"",
+  system:"",
+  maxTokens:4096,
+  ctxLimit:40,
+  thinkOn:false,
+  thinkBudget:4000,
+  theme:"auto",
+  sumAt:24,          // suggest compacting once the live context passes this many messages
+  stats:[],          // {t, m:model, p:provider, i:inTokens, o:outTokens}
+  prices:{},         // model -> {in, out}  per 1M tokens, filled in by hand
+  convs:[],
+  activeId:null
+};
+let S = load();
+
+function load(){
+  try{
+    const raw = rawGet();
+    if(!raw) return structuredClone(DEFAULTS);
+    const p = JSON.parse(raw);
+    return Object.assign(structuredClone(DEFAULTS), p);
+  }catch(e){
+    console.warn("存档解析失败，起用空档", e);
+    return structuredClone(DEFAULTS);
+  }
+}
+let saveTimer = null;
+function save(now){
+  clearTimeout(saveTimer);
+  const go = ()=>{ rawSet(JSON.stringify(S)); paintStore(); };
+  if(now) go(); else saveTimer = setTimeout(go, 260);
+}
+
+function paintStore(){
+  const el = document.getElementById("storeFill");
+  const tx = document.getElementById("storeTxt");
+  const bar= document.getElementById("storeBar");
+  if(!storageOK){
+    tx.textContent = "⚠ 存储不可用，只在内存里";
+    bar.classList.add("warn"); el.style.width = "100%"; return;
+  }
+  const bytes = new Blob([JSON.stringify(S)]).size;
+  const cap = 5*1024*1024;
+  const pct = Math.min(100, bytes/cap*100);
+  el.style.width = pct.toFixed(1)+"%";
+  bar.classList.toggle("warn", pct>75);
+  const kb = bytes<1024 ? bytes+" B" : (bytes/1024).toFixed(0)+" KB";
+  tx.textContent = "存储 "+kb+(pct>75 ? " · 该导出备份了" : "");
+}
+
+/* ============ tiny markdown (inline, no CDN, offline-safe) ============ */
+function esc(s){ return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function inlineMd(t){
+  t = esc(t);
+  t = t.replace(/`([^`\n]+)`/g, (m,a)=>"<code>"+a+"</code>");
+  t = t.replace(/\*\*\*([^*\n]+)\*\*\*/g, "<strong><em>$1</em></strong>");
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  t = t.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+  t = t.replace(/~~([^~\n]+)~~/g, "<del>$1</del>");
+  t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  return t;
+}
+
+function md(src){
+  const lines = String(src).replace(/\r\n?/g,"\n").split("\n");
+  let out=[], i=0;
+  const closeP = buf => { if(buf.length){ out.push("<p>"+inlineMd(buf.join("\n")).replace(/\n/g,"<br>")+"</p>"); buf.length=0; } };
+  let para=[];
+
+  while(i<lines.length){
+    const L = lines[i];
+
+    // fenced code
+    const fence = L.match(/^\s*```(\w*)\s*$/);
+    if(fence){
+      closeP(para);
+      const lang = fence[1]; const body=[];
+      i++;
+      while(i<lines.length && !/^\s*```\s*$/.test(lines[i])){ body.push(lines[i]); i++; }
+      i++;
+      out.push('<pre><button class="cp" data-cp>复制</button><code'+
+        (lang?' class="lang-'+esc(lang)+'"':'')+'>'+esc(body.join("\n"))+'</code></pre>');
+      continue;
+    }
+    // heading
+    const h = L.match(/^(#{1,3})\s+(.*)$/);
+    if(h){ closeP(para); const n=h[1].length; out.push("<h"+n+">"+inlineMd(h[2])+"</h"+n+">"); i++; continue; }
+    // hr
+    if(/^\s*(---|\*\*\*|___)\s*$/.test(L)){ closeP(para); out.push("<hr>"); i++; continue; }
+    // blockquote
+    if(/^\s*>\s?/.test(L)){
+      closeP(para); const b=[];
+      while(i<lines.length && /^\s*>\s?/.test(lines[i])){ b.push(lines[i].replace(/^\s*>\s?/,"")); i++; }
+      out.push("<blockquote>"+md(b.join("\n"))+"</blockquote>"); continue;
+    }
+    // table
+    if(/\|/.test(L) && i+1<lines.length && /^\s*\|?[\s:-]*-[-\s:|]*\|?\s*$/.test(lines[i+1]) && /\|/.test(lines[i+1])){
+      closeP(para);
+      const cells = r => r.replace(/^\s*\|/,"").replace(/\|\s*$/,"").split("|").map(c=>c.trim());
+      const head = cells(L); i+=2;
+      let html = "<table><thead><tr>"+head.map(c=>"<th>"+inlineMd(c)+"</th>").join("")+"</tr></thead><tbody>";
+      while(i<lines.length && /\|/.test(lines[i]) && lines[i].trim()!==""){
+        html += "<tr>"+cells(lines[i]).map(c=>"<td>"+inlineMd(c)+"</td>").join("")+"</tr>"; i++;
+      }
+      out.push(html+"</tbody></table>"); continue;
+    }
+    // lists
+    if(/^\s*([-*+]|\d+\.)\s+/.test(L)){
+      closeP(para);
+      const ordered = /^\s*\d+\./.test(L);
+      const items=[];
+      while(i<lines.length && /^\s*([-*+]|\d+\.)\s+/.test(lines[i])){
+        let txt = lines[i].replace(/^\s*([-*+]|\d+\.)\s+/,"");
+        i++;
+        while(i<lines.length && /^\s{2,}\S/.test(lines[i]) && !/^\s*([-*+]|\d+\.)\s+/.test(lines[i])){
+          txt += "\n"+lines[i].trim(); i++;
+        }
+        items.push("<li>"+inlineMd(txt).replace(/\n/g,"<br>")+"</li>");
+      }
+      out.push((ordered?"<ol>":"<ul>")+items.join("")+(ordered?"</ol>":"</ul>"));
+      continue;
+    }
+    // blank / paragraph
+    if(L.trim()===""){ closeP(para); i++; continue; }
+    para.push(L); i++;
+  }
+  closeP(para);
+  return out.join("");
+}
+
+/* ============ token accounting ============ */
+// rough: CJK ~1 char/token, latin ~3.6 chars/token. Labelled 估算 everywhere it shows.
+function estTokens(s){
+  s = String(s||""); let cjk=0;
+  for(const ch of s) if(/[㐀-鿿豈-﫿぀-ヿ가-힯]/.test(ch)) cjk++;
+  return Math.ceil(cjk + (s.length-cjk)/3.6);
+}
+function pushStat(model,u){
+  if(!u || (!u.in && !u.out)) return;
+  S.stats.push({t:Date.now(), m:model||"?", p:S.provider, i:u.in|0, o:u.out|0});
+  if(S.stats.length>3000) S.stats = S.stats.slice(-3000);
+}
+function fmtN(n){
+  if(n>=1e6) return (n/1e6).toFixed(2)+"M";
+  if(n>=1e3) return (n/1e3).toFixed(1)+"k";
+  return String(n);
+}
+
+/* ============ context window ============ */
+// The transcript is never trimmed. Only what we SEND is trimmed.
+function liveMsgs(c){
+  const from = c.archived || 0;
+  return c.msgs.slice(from).filter(m=>!m.error);
+}
+function buildHistory(c){
+  let live = liveMsgs(c).slice(-S.ctxLimit).map(m=>({role:m.role, content:m.content}));
+  while(live.length && live[0].role!=="user") live.shift();   // must open on a user turn
+  return live;
+}
+function effSystem(c){
+  let s = S.system.trim();
+  if(c && c.summary)
+    s = (s ? s+"\n\n" : "") +
+        "【这次对话更早部分的摘要，用来延续上下文】\n" + c.summary;
+  return s;
+}
+function ctxCost(c){
+  if(!c) return {n:0, tok:0};
+  const h = buildHistory(c);
+  let tok = estTokens(effSystem(c));
+  h.forEach(m=>tok += estTokens(m.content)+4);
+  return {n:h.length, tok};
+}
+function paintCtx(){
+  const c = active();
+  const bar=$("#ctxBar"), mini=$("#ctxMini");
+  if(!c){ bar.classList.remove("on"); mini.textContent=""; return; }
+  const {n,tok} = ctxCost(c);
+  mini.textContent = n ? "上下文 "+n+" 条 · 约 "+fmtN(tok)+" tok" : "";
+  const over = n >= S.sumAt;
+  bar.classList.toggle("on", over && !c.ctxHushed && !streaming);
+  bar.classList.toggle("hot", n >= S.sumAt*1.6);
+  $("#ctxTxt").innerHTML = "每次发送都在重复带上这 <b>"+n+"</b> 条（约 "+fmtN(tok)+
+    " token）。压缩后旧的留在页面上，只是不再发出去。";
+}
+
+/* ============ conversations ============ */
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+function active(){ return S.convs.find(c=>c.id===S.activeId) || null; }
+function newConv(){
+  const c = { id:uid(), title:"新的对话", msgs:[], ts:Date.now() };
+  S.convs.unshift(c); S.activeId = c.id; save(); renderAll(); $("#input").focus();
+}
+function delConv(id){
+  const c = S.convs.find(x=>x.id===id);
+  if(c && c.msgs.length && !confirm("删掉「"+c.title+"」？这条记录不会有别的地方留着。")) return;
+  S.convs = S.convs.filter(x=>x.id!==id);
+  if(S.activeId===id) S.activeId = S.convs[0]?.id || null;
+  save(); renderAll();
+}
+
+function renderConvs(){
+  const box = $("#convList"); box.innerHTML="";
+  S.convs.forEach(c=>{
+    const d = document.createElement("div");
+    d.className = "conv"+(c.id===S.activeId?" active":"");
+    const t = document.createElement("span"); t.className="t"; t.textContent = c.title || "未命名";
+    const x = document.createElement("span"); x.className="x"; x.textContent="×"; x.title="删除";
+    x.onclick = e=>{ e.stopPropagation(); delConv(c.id); };
+    d.append(t,x);
+    d.onclick = ()=>{ S.activeId=c.id; save(); renderAll(); if(innerWidth<=720) $("#side").classList.add("hidden"); };
+    box.appendChild(d);
+  });
+}
+
+/* ============ branches ============
+   A branch is a whole TAIL, not just one reply — everything that came after the
+   fork travels with it. Stored on the user message where the fork happened:
+     m.alts = [ [tail...], [tail...] ]   m.bi = which one is currently spliced in
+   The live branch is c.msgs itself; alts[bi] is only re-snapshotted right before
+   we switch away from it, so nothing is duplicated on every keystroke. Nested
+   forks ride along inside their tails automatically (objects by reference). */
+
+function forkIdxFor(c, idx){                 // nearest preceding user message
+  for(let i=idx-1;i>=0;i--) if(c.msgs[i].role==="user") return i;
+  return -1;
+}
+function snapshotBranch(c, fi){
+  const f = c.msgs[fi];
+  if(f && f.alts) f.alts[f.bi] = c.msgs.slice(fi+1);
+}
+function switchBranch(c, fi, n){
+  const f = c.msgs[fi];
+  if(!f || !f.alts || n<0 || n>=f.alts.length || n===f.bi) return;
+  if(fi < (c.archived||0)){                  // the summary described the old tail
+    delete c.summary; c.archived = 0;
+  }
+  snapshotBranch(c, fi);
+  f.bi = n;
+  c.msgs.length = fi+1;
+  f.alts[n].forEach(x=>c.msgs.push(x));
+  save(true); renderMsgs();
+}
+function dropBranch(c, fi){
+  const f = c.msgs[fi];
+  if(!f.alts || f.alts.length<2) return;
+  if(!confirm("删掉当前这条分支？（第 "+(f.bi+1)+" / "+f.alts.length+" 条，连同它后面的对话）")) return;
+  f.alts.splice(f.bi,1);
+  const n = Math.min(f.bi, f.alts.length-1);
+  f.bi = n;
+  c.msgs.length = fi+1;
+  f.alts[n].forEach(x=>c.msgs.push(x));
+  if(f.alts.length<2){ delete f.alts; delete f.bi; }
+  save(true); renderMsgs(); toast("分支已删");
+}
+function regenerate(idx){
+  const c = active(); if(!c || streaming) return;
+  const fi = forkIdxFor(c, idx);
+  if(fi<0) return toast("这条前面没有提问，没法重答");
+  if(fi < (c.archived||0)){ delete c.summary; c.archived = 0; }
+  const f = c.msgs[fi];
+  if(!f.alts){ f.alts = [c.msgs.slice(fi+1)]; f.bi = 0; }
+  else snapshotBranch(c, fi);
+  f.alts.push([]); f.bi = f.alts.length-1;   // new empty branch becomes live
+  c.msgs.length = fi+1;
+  save(true); renderMsgs();
+  run();
+}
+function brEl(c, fi){
+  const f = c.msgs[fi];
+  const w = document.createElement("span"); w.className="br";
+  const mk = (txt,fn,dis,cls)=>{
+    const b=document.createElement("button"); b.textContent=txt;
+    if(cls) b.className=cls;
+    b.disabled=!!dis; if(!dis) b.onclick=fn; return b;
+  };
+  w.appendChild(mk("‹", ()=>switchBranch(c,fi,f.bi-1), f.bi===0));
+  const n=document.createElement("span"); n.className="n";
+  n.textContent=(f.bi+1)+"/"+f.alts.length; w.appendChild(n);
+  w.appendChild(mk("›", ()=>switchBranch(c,fi,f.bi+1), f.bi===f.alts.length-1));
+  const rm = mk("×", ()=>dropBranch(c,fi), false, "rm");
+  rm.title="删掉当前这条分支"; w.appendChild(rm);
+  return w;
+}
+
+/* Edit any message in place. Whatever you save becomes the context sent next turn —
+   that's the point: you can steer by rewriting what "it said". */
+function startEdit(wrap, m, idx){
+  if(streaming) return toast("等它说完再改");
+  if(wrap.querySelector(".edit")) return;
+  const c = active(); if(!c) return;
+  const bubble = wrap.querySelector(".bubble");
+  const think  = wrap.querySelector(".think");
+
+  const box = document.createElement("div"); box.className="edit";
+  const ta  = document.createElement("textarea");
+  ta.value = m.content;
+  const row = document.createElement("div"); row.className="edit-row";
+
+  const bSave = document.createElement("button"); bSave.className="mini primary"; bSave.textContent="保存";
+  const bCancel = document.createElement("button"); bCancel.className="mini"; bCancel.textContent="取消";
+  row.append(bSave);
+  let bRe = null;
+  if(m.role==="user" && idx < c.msgs.length-0){
+    bRe = document.createElement("button"); bRe.className="mini warn"; bRe.textContent="保存并重答";
+    bRe.title = "改完这句，删掉它后面的所有回合，重新问一次";
+    row.appendChild(bRe);
+  }
+  row.appendChild(bCancel);
+  const hint = document.createElement("span"); hint.className="edit-hint";
+  hint.textContent = "⌘/Ctrl+Enter 保存 · Esc 取消";
+  row.appendChild(hint);
+
+  box.append(ta,row);
+  bubble.style.display = "none";
+  if(think) think.style.display = "none";
+  wrap.insertBefore(box, bubble);
+
+  const size = ()=>{ ta.style.height="auto"; ta.style.height=Math.min(ta.scrollHeight, 460)+"px"; };
+  ta.addEventListener("input", size); size();
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+
+  const close = ()=>{
+    box.remove(); bubble.style.display=""; if(think) think.style.display="";
+  };
+  const commit = (rerun)=>{
+    const v = ta.value;
+    if(v !== m.content){ m.content = v; m.edited = true; }
+    if(rerun){
+      const drop = c.msgs.length-(idx+1);
+      if(drop>0 && !confirm(
+        "改这句会删掉它后面的 "+drop+" 条对话，这条路回不来了。\n\n"+
+        "想把旧的留着，就点取消，改用回复上的「重答」—— 那个会另开一条分支。\n\n继续？")) return;
+      // the summary described turns we're about to rewrite — drop it rather than lie
+      if(idx < (c.archived||0)){ delete c.summary; c.archived = 0; }
+      c.msgs.length = idx+1;
+    }
+    save(true); renderMsgs();
+    if(rerun) run();
+  };
+
+  bSave.onclick = ()=>commit(false);
+  bCancel.onclick = close;
+  if(bRe) bRe.onclick = ()=>commit(true);
+  ta.addEventListener("keydown", e=>{
+    if(e.key==="Escape"){ e.stopPropagation(); close(); }
+    if(e.key==="Enter" && (e.metaKey||e.ctrlKey)){ e.preventDefault(); commit(false); }
+  });
+}
+
+function renderMsgs(){
+  const box = $("#msgs"); box.innerHTML="";
+  const c = active();
+  $("#empty").style.display = (!c || !c.msgs.length) ? "flex" : "none";
+  if(!c) return;
+  const cut = c.archived || 0;
+  c.msgs.forEach((m,idx)=>{
+    if(idx===cut && cut>0 && c.summary) box.appendChild(sumCard(c));
+    const el = msgEl(m,idx);
+    if(idx<cut) el.classList.add("folded");
+    box.appendChild(el);
+  });
+  if(cut>0 && cut>=c.msgs.length && c.summary) box.appendChild(sumCard(c));
+  paintCtx();
+  scrollDown();
+}
+
+function sumCard(c){
+  const w = document.createElement("div"); w.className="sumcard";
+  const hd = document.createElement("div"); hd.className="hd";
+  hd.appendChild(Object.assign(document.createElement("span"),
+    {textContent:"以上 "+c.archived+" 条已折叠为摘要 · 只有下面这段会被发出去"}));
+  const un = document.createElement("button"); un.textContent="撤销";
+  un.title = "把旧消息重新放回上下文";
+  un.onclick = ()=>{ delete c.summary; c.archived=0; save(true); renderMsgs(); toast("摘要已撤销，旧消息回到上下文"); };
+  hd.appendChild(un);
+  const b = document.createElement("div"); b.textContent = c.summary;
+  w.append(hd,b);
+  return w;
+}
+
+async function compact(){
+  const c = active(); if(!c || streaming) return;
+  const live = liveMsgs(c);
+  if(live.length < 6) return toast("还太短，压了不划算");
+  const keep = 6;                                   // recent turns stay verbatim
+  const oldOnes = live.slice(0, live.length-keep);
+  if(!oldOnes.length) return toast("没有可折叠的部分");
+
+  const transcript = oldOnes.map(m=>(m.role==="user"?"【我】":"【你】")+m.content).join("\n\n");
+  const ask = (c.summary ? "已有摘要：\n"+c.summary+"\n\n以及后续对话：\n" : "对话记录：\n") + transcript +
+    "\n\n---\n把上面压缩成一份交接摘要，供你自己稍后接着聊用。要求：\n" +
+    "1. 保留事实、结论、已定下的决定、对方的偏好和称呼习惯\n" +
+    "2. 保留未解决的问题和待办\n" +
+    "3. 去掉寒暄和重复\n4. 直接输出摘要正文，别写开场白";
+
+  $("#btnSum").textContent = "压缩中…"; $("#btnSum").disabled = true;
+  try{
+    const r = await callAPI([{role:"user",content:ask}],
+                            {system:"", noThink:true, maxTokens:1500, stream:false});
+    if(!r.text.trim()) throw new Error("摘要是空的");
+    c.summary  = r.text.trim();
+    c.archived = c.msgs.indexOf(oldOnes[oldOnes.length-1]) + 1;
+    c.ctxHushed = false;
+    const u = S.provider==="anthropic"
+      ? {in:r.raw?.usage?.input_tokens|0, out:r.raw?.usage?.output_tokens|0}
+      : {in:r.raw?.usage?.prompt_tokens|0, out:r.raw?.usage?.completion_tokens|0};
+    pushStat(S.model, u);
+    save(true); renderMsgs();
+    toast("折叠了 "+oldOnes.length+" 条，记录都还在");
+  }catch(e){ toast("压缩失败："+String(e.message||e).slice(0,60)); }
+  finally{ $("#btnSum").textContent="压缩成摘要"; $("#btnSum").disabled=false; }
+}
+
+function thinkEl(text, open){
+  const d = document.createElement("details");
+  d.className = "think"; d.open = !!open;
+  const s = document.createElement("summary");
+  const ico = document.createElement("span"); ico.className = "tk-ico";
+  const lab = document.createElement("span"); lab.className = "tk-label"; lab.textContent = "思考过程";
+  const n   = document.createElement("span"); n.className = "tk-n";
+  s.append(ico, lab, n);
+  const b = document.createElement("div"); b.className = "think-body";
+  b.textContent = text || "";
+  d.append(s, b);
+  return d;
+}
+function thinkCount(d, text){
+  d.querySelector(".tk-n").textContent = text ? text.length + " 字" : "";
+}
+
+function msgEl(m, idx){
+  const d = document.createElement("div");
+  d.className = "msg "+(m.role==="user"?"user":(m.error?"ai err":"ai"));
+  const who = document.createElement("div"); who.className="who";
+  const nm = document.createElement("span");
+  nm.textContent = m.role==="user" ? "你" : (m.error ? "出错了" : "对方");
+  who.appendChild(nm);
+
+  if(m.edited){
+    const t = document.createElement("span"); t.className="tag-ed"; t.textContent="改过";
+    t.title = "这条被你手动改过，发出去的是改后的版本";
+    who.appendChild(t);
+  }
+  if(m.role==="user" && m.alts && m.alts.length>1) who.appendChild(brEl(active(), idx));
+
+  const acts = document.createElement("span"); acts.className="acts";
+  const bEdit = document.createElement("button"); bEdit.textContent="编辑";
+  bEdit.onclick = ()=> startEdit(d, m, idx);
+  const bCopy = document.createElement("button"); bCopy.textContent="复制";
+  bCopy.onclick = ()=>{ copy(m.content); };
+  const bDel = document.createElement("button"); bDel.textContent="删除";
+  bDel.onclick = ()=>{ const c=active(); c.msgs.splice(idx,1); save(); renderMsgs(); };
+  acts.append(bEdit,bCopy,bDel);
+  if(m.role==="assistant" && !streaming){
+    const bRe = document.createElement("button"); bRe.textContent="重答";
+    bRe.title = "另开一条分支重答 —— 现在这条连同后面的对话都会留着，可以切回来";
+    bRe.onclick = ()=> regenerate(idx);
+    acts.appendChild(bRe);
+  }
+  who.appendChild(acts);
+
+  const b = document.createElement("div"); b.className="bubble";
+  if(m.role==="user" || m.error) b.textContent = m.content;
+  else b.innerHTML = md(m.content);
+  d.append(who);
+  if(m.thinking && m.thinking.trim()){
+    const t = thinkEl(m.thinking, false);
+    thinkCount(t, m.thinking);
+    d.appendChild(t);
+  }
+  d.appendChild(b);
+  b.ondblclick = ()=> startEdit(d, m, idx);
+  if(m.usage){
+    const u=document.createElement("div"); u.className="usage";
+    u.textContent = "↑"+m.usage.in+" ↓"+m.usage.out+" tokens";
+    d.appendChild(u);
+  }
+  return d;
+}
+
+function paintPill(){
+  const p = $("#pillThink"), anth = S.provider==="anthropic";
+  p.classList.toggle("on", anth && S.thinkOn);
+  $("#pillTxt").textContent = anth
+    ? (S.thinkOn ? "思考 "+fmtN(S.thinkBudget) : "思考 关")
+    : "思考 由模型定";
+  p.title = anth ? "点一下开关扩展思考（Anthropic）"
+                 : "OpenAI 兼容通道由模型决定：换成 deepseek-reasoner 这类推理模型就自动有";
+}
+
+function renderAll(){
+  renderConvs();
+  const c = active();
+  $("#title").textContent = c ? (c.title||"未命名") : "";
+  $("#modelTag").textContent = S.model || "未设模型";
+  renderMsgs();
+  paintPill();
+  paintStore();
+}
+
+function scrollDown(){
+  const s = $("#scroll");
+  requestAnimationFrame(()=>{ s.scrollTop = s.scrollHeight; });
+}
+
+/* ============ networking ============ */
+let streaming = false;
+let ctl = null;
+
+function providerNote(){
+  const p = S.provider;
+  $("#provNote").innerHTML = p==="anthropic"
+    ? "已实测：这条通道允许浏览器直连，本地 <code>file://</code> 打开也放行。"
+    : "已由沐沐实测：DeepSeek 这条通道本地打开可用。个别服务会拦 <code>file://</code>，先按「连接自检」，被拦了见下方说明。";
+  $("#fBase").style.display = p==="openai" ? "" : "none";
+
+  const anth = p==="anthropic";
+  $("#fThink").style.display = anth ? "" : "none";   // only Anthropic needs a switch
+  $("#thinkNote").innerHTML = anth
+    ? "开了之后先出思考再出正文。预算越大想得越久也越贵；「最大回复长度」会自动抬到预算之上，不用你操心。"
+    : "";
+}
+
+async function fetchModels(){
+  const key = $("#iKey").value.trim();
+  const prov = S.provider;
+  const base = $("#iBase").value.trim().replace(/\/$/,"");
+  if(!key) return showTest(false,"先填 API Key");
+  showTest(null,"正在问接口要模型列表…");
+  try{
+    let url, headers;
+    if(prov==="anthropic"){
+      url = "https://api.anthropic.com/v1/models?limit=100";
+      headers = { "x-api-key":key, "anthropic-version":"2023-06-01",
+                  "anthropic-dangerous-direct-browser-access":"true" };
+    }else{
+      url = (base||"https://api.openai.com/v1")+"/models";
+      headers = { "authorization":"Bearer "+key };
+    }
+    const r = await fetch(url,{headers});
+    if(!r.ok) throw new Error("HTTP "+r.status+" "+(await r.text()).slice(0,200));
+    const j = await r.json();
+    const ids = (j.data||[]).map(m=>m.id).filter(Boolean).sort();
+    const dl = $("#modelList"); dl.innerHTML="";
+    ids.forEach(id=>{ const o=document.createElement("option"); o.value=id; dl.appendChild(o); });
+    if(!$("#iModel").value && ids.length) $("#iModel").value = ids[0];
+    showTest(true, "拿到 "+ids.length+" 个模型，点模型框看下拉。");
+  }catch(e){ showTest(false, corsHint(e)); }
+}
+
+function corsHint(e){
+  const m = String(e && e.message || e);
+  if(/Failed to fetch|NetworkError|Load failed/i.test(m)){
+    return "连不上。多半是这家服务不给浏览器直连（CORS），或者断网了。\n\n"+
+      "补救：把这个 html 放进一个文件夹，在该文件夹开终端跑\n"+
+      "  python3 -m http.server 8000\n"+
+      "然后浏览器开 http://localhost:8000/小窗.html\n"+
+      "这样带真实来源，通过率高很多。";
+  }
+  return m;
+}
+
+function showTest(ok,msg){
+  const t=$("#testOut"); t.className="on"+(ok===true?" ok":ok===false?" bad":"");
+  t.textContent = (ok===true?"✓ ":ok===false?"✗ ":"· ")+msg;
+}
+
+async function testConn(){
+  syncFromForm();
+  if(!S.key) return showTest(false,"先填 API Key");
+  if(!S.model) return showTest(false,"先填模型 ID（或点「拉列表」）");
+  showTest(null,"正在敲门…");
+  try{
+    const t0 = performance.now();
+    const res = await callAPI([{role:"user",content:"回复两个字：在的"}],
+                              {maxTokens:32, stream:false, noThink:true});
+    const ms = Math.round(performance.now()-t0);
+    showTest(true, "通了（"+ms+"ms）。对面说：“"+res.text.trim().slice(0,40)+"”");
+  }catch(e){ showTest(false, corsHint(e)); }
+}
+
+function buildReq(msgs, opt){
+  const stream = opt.stream !== false;
+  let maxTokens = opt.maxTokens || S.maxTokens;
+  const sys = (opt.system !== undefined ? opt.system : S.system).trim();
+  if(S.provider==="anthropic"){
+    const body = { model:S.model, max_tokens:maxTokens, messages:msgs, stream };
+    if(sys) body.system = sys;
+    if(S.thinkOn && !opt.noThink){
+      const budget = Math.max(1024, S.thinkBudget|0);
+      // max_tokens must leave room for the answer on top of the thinking budget
+      body.max_tokens = Math.max(maxTokens, budget + 1024);
+      body.thinking = { type:"enabled", budget_tokens:budget };
+    }
+    return {
+      url:"https://api.anthropic.com/v1/messages",
+      headers:{ "content-type":"application/json", "x-api-key":S.key,
+                "anthropic-version":"2023-06-01",
+                "anthropic-dangerous-direct-browser-access":"true" },
+      body
+    };
+  }
+  const full = sys ? [{role:"system",content:sys}, ...msgs] : msgs;
+  return {
+    url:(S.baseURL||"https://api.openai.com/v1").replace(/\/$/,"")+"/chat/completions",
+    headers:{ "content-type":"application/json", "authorization":"Bearer "+S.key },
+    body:{ model:S.model, max_tokens:maxTokens, messages:full, stream }
+  };
+}
+
+async function callAPI(msgs, opt={}){
+  const {url,headers,body} = buildReq(msgs,opt);
+  const r = await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal:opt.signal});
+  if(!r.ok){
+    let d=""; try{ d=(await r.text()).slice(0,500); }catch(_){}
+    throw new Error("HTTP "+r.status+"\n"+d);
+  }
+  const j = await r.json();
+  const text = S.provider==="anthropic"
+    ? (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("")
+    : (j.choices?.[0]?.message?.content || "");
+  return {text, raw:j};
+}
+
+async function streamAPI(msgs, onDelta, onThink, signal, extra){
+  const {url,headers,body} = buildReq(msgs, Object.assign({stream:true}, extra||{}));
+  const r = await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal});
+  if(!r.ok){
+    let d=""; try{ d=(await r.text()).slice(0,500); }catch(_){}
+    throw new Error("HTTP "+r.status+"\n"+d);
+  }
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let buf="", usage={in:0,out:0};
+  while(true){
+    const {done,value} = await reader.read();
+    if(done) break;
+    buf += dec.decode(value,{stream:true});
+    const parts = buf.split("\n\n");
+    buf = parts.pop();
+    for(const chunk of parts){
+      for(const line of chunk.split("\n")){
+        if(!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if(!data || data==="[DONE]") continue;
+        let j; try{ j = JSON.parse(data); }catch(_){ continue; }
+        if(S.provider==="anthropic"){
+          if(j.type==="content_block_delta"){
+            // extended thinking arrives as its own delta type, not as text
+            if(j.delta?.type==="thinking_delta" && j.delta.thinking) onThink(j.delta.thinking);
+            else if(j.delta?.text) onDelta(j.delta.text);
+          }
+          if(j.type==="message_start" && j.message?.usage) usage.in = j.message.usage.input_tokens||0;
+          if(j.type==="message_delta" && j.usage) usage.out = j.usage.output_tokens||0;
+        }else{
+          const d = j.choices?.[0]?.delta || {};
+          // DeepSeek uses reasoning_content; OpenRouter and some others use reasoning
+          const rt = d.reasoning_content ?? d.reasoning;
+          if(rt) onThink(rt);
+          if(d.content) onDelta(d.content);
+          if(j.usage){ usage.in=j.usage.prompt_tokens||0; usage.out=j.usage.completion_tokens||0; }
+        }
+      }
+    }
+  }
+  return usage;
+}
+
+/* ============ send loop ============ */
+async function run(){
+  const c = active(); if(!c) return;
+  if(!S.key || !S.model){ openSet(); return toast("先把 Key 和模型填上"); }
+
+  streaming = true; setSendState(true); paintCtx();
+  // NOTE: thinking is deliberately NOT replayed into history — DeepSeek rejects it
+  // and it would re-bill every turn. buildHistory only ever sends role+content.
+  const hist = buildHistory(c);
+
+  const holder = { role:"assistant", content:"" };
+  c.msgs.push(holder);
+  renderMsgs();
+  const wrap = $("#msgs").lastElementChild;
+  const box  = wrap.querySelector(".bubble");
+  box.innerHTML = '<span class="cursor"></span>';
+
+  ctl = new AbortController();
+  let acc = "", thk = "", tBox = null, folded = false;
+
+  const onThink = t=>{
+    thk += t; holder.thinking = thk;
+    if(!tBox){
+      tBox = thinkEl("", true);
+      tBox.classList.add("live");
+      tBox.querySelector(".tk-label").textContent = "正在想…";
+      wrap.insertBefore(tBox, box);
+      box.innerHTML = "";                       // cursor moves into the thinking box
+    }
+    tBox.querySelector(".think-body").textContent = thk;
+    thinkCount(tBox, thk);
+    scrollDown();
+  };
+  const onDelta = t=>{
+    if(tBox && !folded){                        // answer started — fold the thinking away
+      folded = true;
+      tBox.open = false;
+      tBox.classList.remove("live");
+      tBox.querySelector(".tk-label").textContent = "思考过程";
+    }
+    acc += t; holder.content = acc;
+    box.innerHTML = md(acc)+'<span class="cursor"></span>';
+    scrollDown();
+  };
+
+  try{
+    const usage = await streamAPI(hist, onDelta, onThink, ctl.signal, {system:effSystem(c)});
+    holder.content = acc;
+    if(usage && (usage.in||usage.out)){ holder.usage = usage; pushStat(S.model, usage); }
+    if(!acc.trim()){ holder.content="(空回复)"; }
+  }catch(e){
+    if(e.name==="AbortError"){
+      holder.content = acc || "(已停止)";
+    }else{
+      c.msgs.pop();
+      c.msgs.push({role:"assistant", content:corsHint(e), error:true});
+    }
+  }finally{
+    streaming=false; ctl=null; setSendState(false);
+    if(c.title==="新的对话"){
+      const first = c.msgs.find(m=>m.role==="user");
+      if(first) c.title = first.content.replace(/\s+/g," ").slice(0,18) || "新的对话";
+    }
+    save(true); renderAll();
+  }
+}
+
+function setSendState(on){
+  const b=$("#send");
+  b.classList.toggle("stop",on);
+  b.title = on ? "停止" : "发送";
+  $("#sendIco").innerHTML = on ? '<rect x="6" y="6" width="12" height="12" rx="2"/>'
+                               : '<path d="M12 19V5M5 12l7-7 7 7"/>';
+}
+
+function submit(){
+  if(streaming){ ctl?.abort(); return; }
+  const el = $("#input"); const txt = el.value.trim();
+  if(!txt) return;
+  if(!active()) newConv();
+  active().msgs.push({role:"user", content:txt});
+  el.value=""; autoSize(); updCnt();
+  save(); renderMsgs();
+  run();
+}
+
+/* ============ export / import ============ */
+function doExport(){
+  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+  const dump = structuredClone(S);
+  dump.key = "";                                   // never bake the key into a backup file
+  const blob = new Blob([JSON.stringify(dump,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "小窗备份-"+stamp+".json";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast("已导出（不含 API Key）");
+}
+
+function doImport(file){
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    try{
+      const j = JSON.parse(fr.result);
+      if(!Array.isArray(j.convs)) throw new Error("不像小窗的备份");
+      const mine = new Set(S.convs.map(c=>c.id));
+      const add = j.convs.filter(c=>!mine.has(c.id));
+      S.convs = [...add, ...S.convs];
+      ["provider","baseURL","model","system","maxTokens","ctxLimit","theme",
+       "thinkOn","thinkBudget","sumAt"]
+        .forEach(k=>{ if(j[k]!==undefined && j[k]!=="") S[k]=j[k]; });
+      if(j.prices) S.prices = Object.assign({}, j.prices, S.prices);
+      if(Array.isArray(j.stats)){                    // merge flows, drop exact dupes
+        const seen = new Set(S.stats.map(s=>s.t+"|"+s.m+"|"+s.i+"|"+s.o));
+        j.stats.forEach(s=>{ if(!seen.has(s.t+"|"+s.m+"|"+s.i+"|"+s.o)) S.stats.push(s); });
+        S.stats.sort((a,b)=>a.t-b.t);
+        if(S.stats.length>3000) S.stats = S.stats.slice(-3000);
+      }
+      if(!S.activeId) S.activeId = S.convs[0]?.id||null;
+      save(true); renderAll(); applyTheme();
+      toast("合并了 "+add.length+" 条对话");
+    }catch(e){ toast("导入失败："+e.message); }
+  };
+  fr.readAsText(file);
+}
+
+/* ============ stats ============ */
+function money(n){ return n<0.01 && n>0 ? "<0.01" : n.toFixed(2); }
+
+function renderStats(){
+  const w = $("#statWrap");
+  const st = S.stats;
+  if(!st.length){
+    w.innerHTML = '<div class="muted">还没有记录。发一条消息就开始记了。<br><br>'+
+      '统计只在这台机器上，跟服务商的账单是两本账——这里记的是「这个页面发出去的」，'+
+      '你在别处用的量它看不见。</div>';
+    return;
+  }
+  const tot = st.reduce((a,s)=>({i:a.i+s.i, o:a.o+s.o}), {i:0,o:0});
+
+  // per model
+  const byM = {};
+  st.forEach(s=>{ (byM[s.m] ||= {n:0,i:0,o:0}); byM[s.m].n++; byM[s.m].i+=s.i; byM[s.m].o+=s.o; });
+  const models = Object.entries(byM).sort((a,b)=>(b[1].i+b[1].o)-(a[1].i+a[1].o));
+
+  // last 14 days
+  const day = d => new Date(d).toISOString().slice(0,10);
+  const byD = {}; st.forEach(s=>{ byD[day(s.t)] = (byD[day(s.t)]||0)+s.i+s.o; });
+  const days=[]; for(let k=13;k>=0;k--){
+    const d = day(Date.now()-k*864e5); days.push([d, byD[d]||0]);
+  }
+  const peak = Math.max(1, ...days.map(d=>d[1]));
+
+  let cost = 0, priced = false;
+  models.forEach(([m,v])=>{
+    const p = S.prices[m];
+    if(p && (p.in||p.out)){ priced = true; cost += v.i/1e6*(p.in||0) + v.o/1e6*(p.out||0); }
+  });
+
+  w.innerHTML =
+    '<div class="stat-top">'+
+      '<div class="stat-card"><div class="k">请求</div><div class="v">'+st.length+'</div></div>'+
+      '<div class="stat-card"><div class="k">输入</div><div class="v">'+fmtN(tot.i)+'<small>tok</small></div></div>'+
+      '<div class="stat-card"><div class="k">输出</div><div class="v">'+fmtN(tot.o)+'<small>tok</small></div></div>'+
+      (priced?'<div class="stat-card"><div class="k">估算花费</div><div class="v">'+money(cost)+'</div></div>':'')+
+    '</div>'+
+    '<div class="sect">近 14 天（按 token 总量）</div>'+
+    '<div class="spark">'+days.map(d=>
+      '<i style="height:'+Math.max(4,d[1]/peak*100)+'%" title="'+d[0]+'：'+d[1]+' tok"></i>').join('')+'</div>'+
+    '<div class="muted" style="font-size:10.5px">'+days[0][0]+' → '+days[13][0]+'</div>'+
+    '<div class="sect">按模型 · 单价填了才算钱（每 100 万 token）</div>'+
+    '<table class="st"><thead><tr><th>模型</th><th class="n">次</th><th class="n">输入</th>'+
+      '<th class="n">输出</th><th class="n">入单价</th><th class="n">出单价</th></tr></thead><tbody>'+
+    models.map(([m,v])=>{
+      const p = S.prices[m]||{};
+      return '<tr><td class="mdl">'+esc(m)+'</td><td class="n">'+v.n+'</td>'+
+        '<td class="n">'+fmtN(v.i)+'</td><td class="n">'+fmtN(v.o)+'</td>'+
+        '<td class="n"><input data-price="in"  data-m="'+esc(m)+'" type="number" step="0.01" min="0" value="'+(p.in??"")+'"></td>'+
+        '<td class="n"><input data-price="out" data-m="'+esc(m)+'" type="number" step="0.01" min="0" value="'+(p.out??"")+'"></td></tr>';
+    }).join('')+'</tbody></table>'+
+    '<div class="muted" style="margin-top:12px">单价要你自己填 —— 我不硬编价格，'+
+    '因为价格会变，写死的数字只会在某天悄悄骗你。填一次就存着了。<br>'+
+    '另外：思考的 token 算在「输出」里，接口不单独拆出来，所以开了思考输出会明显变粗。</div>';
+
+  w.querySelectorAll("input[data-price]").forEach(inp=>{
+    inp.onchange = ()=>{
+      const m = inp.dataset.m, k = inp.dataset.price;
+      (S.prices[m] ||= {})[k] = parseFloat(inp.value)||0;
+      save(true); renderStats();
+    };
+  });
+}
+
+function statsCsv(){
+  const rows = [["时间","模型","通道","输入tok","输出tok"]].concat(
+    S.stats.map(s=>[new Date(s.t).toISOString(), s.m, s.p, s.i, s.o]));
+  const csv = "﻿"+rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download = "小窗用量-"+new Date().toISOString().slice(0,10)+".csv"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast("已导出 CSV");
+}
+
+/* ============ misc ui ============ */
+function toast(m){
+  const t=$("#toast"); t.textContent=m; t.classList.add("on");
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"),2800);
+}
+function copy(txt){
+  navigator.clipboard?.writeText(txt).then(()=>toast("已复制")).catch(()=>{
+    const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); try{document.execCommand("copy"); toast("已复制");}catch(_){toast("复制失败");}
+    ta.remove();
+  });
+}
+function autoSize(){
+  const el=$("#input"); el.style.height="auto";
+  el.style.height=Math.min(el.scrollHeight,200)+"px";
+}
+function updCnt(){
+  const n=$("#input").value.length;
+  $("#cnt").textContent = n ? n+" 字" : "";
+}
+function applyTheme(){
+  const r=document.documentElement;
+  if(S.theme==="auto") r.removeAttribute("data-theme");
+  else r.setAttribute("data-theme",S.theme);
+}
+function openSet(){
+  $("#iKey").value=S.key; $("#iModel").value=S.model; $("#iSys").value=S.system;
+  $("#iMax").value=S.maxTokens; $("#iCtx").value=S.ctxLimit; $("#iBase").value=S.baseURL;
+  $("#iThinkOn").value = S.thinkOn ? "1" : "0"; $("#iThinkBudget").value = S.thinkBudget;
+  document.querySelectorAll("#segProv button").forEach(b=>b.classList.toggle("on",b.dataset.p===S.provider));
+  providerNote();
+  $("#testOut").className="";
+  $("#mask").classList.add("on");
+}
+function syncFromForm(){
+  S.key=$("#iKey").value.trim();
+  S.model=$("#iModel").value.trim();
+  S.system=$("#iSys").value;
+  S.baseURL=$("#iBase").value.trim();
+  S.maxTokens=Math.max(256,parseInt($("#iMax").value)||4096);
+  S.ctxLimit=Math.max(2,parseInt($("#iCtx").value)||40);
+  S.thinkOn = $("#iThinkOn").value==="1";
+  S.thinkBudget = Math.min(60000, Math.max(1024, parseInt($("#iThinkBudget").value)||4000));
+}
+
+/* ============ wire up ============ */
+$("#newChat").onclick = newConv;
+$("#btnSide").onclick = ()=>$("#side").classList.toggle("hidden");
+$("#btnSet").onclick = openSet;
+$("#btnClose").onclick = ()=>$("#mask").classList.remove("on");
+$("#mask").onclick = e=>{ if(e.target.id==="mask") $("#mask").classList.remove("on"); };
+$("#btnSave").onclick = ()=>{ syncFromForm(); save(true); renderAll(); $("#mask").classList.remove("on"); toast("已保存"); };
+$("#btnTest").onclick = testConn;
+$("#btnModels").onclick = fetchModels;
+$("#pillThink").onclick = ()=>{
+  if(S.provider!=="anthropic")
+    return toast("这条通道由模型决定 —— 换成 deepseek-reasoner 这类推理模型就自动带思考");
+  S.thinkOn = !S.thinkOn; save(true); paintPill();
+  toast(S.thinkOn ? "思考开了，预算 "+S.thinkBudget+" tok（算在输出里）" : "思考关了");
+};
+$("#btnSum").onclick = compact;
+$("#ctxHide").onclick = ()=>{ const c=active(); if(c){ c.ctxHushed=true; save(true); paintCtx(); } };
+$("#btnStats").onclick = ()=>{ renderStats(); $("#statMask").classList.add("on"); };
+$("#btnStatClose").onclick = ()=>$("#statMask").classList.remove("on");
+$("#statMask").onclick = e=>{ if(e.target.id==="statMask") $("#statMask").classList.remove("on"); };
+$("#btnStatCsv").onclick = statsCsv;
+$("#btnStatClear").onclick = ()=>{
+  if(!confirm("清空用量流水？（对话记录不受影响，单价也保留）")) return;
+  S.stats=[]; save(true); renderStats(); toast("流水已清空");
+};
+$("#btnExport").onclick = doExport;
+$("#btnImport").onclick = ()=>$("#fileIn").click();
+$("#fileIn").onchange = e=>{ if(e.target.files[0]) doImport(e.target.files[0]); e.target.value=""; };
+$("#btnTheme").onclick = ()=>{
+  S.theme = S.theme==="auto" ? "light" : S.theme==="light" ? "dark" : "auto";
+  applyTheme(); save(true); toast("主题："+({auto:"跟随系统",light:"浅色",dark:"深色"})[S.theme]);
+};
+document.querySelectorAll("#segProv button").forEach(b=>{
+  b.onclick = ()=>{ S.provider=b.dataset.p;
+    document.querySelectorAll("#segProv button").forEach(x=>x.classList.toggle("on",x===b));
+    providerNote(); paintPill(); };
+});
+$("#send").onclick = submit;
+$("#input").addEventListener("keydown", e=>{
+  if(e.key==="Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); submit(); }
+});
+$("#input").addEventListener("input", ()=>{ autoSize(); updCnt(); });
+$("#title").addEventListener("blur", ()=>{
+  const c=active(); if(!c) return;
+  c.title = $("#title").textContent.trim().slice(0,40) || "未命名";
+  save(true); renderConvs();
+});
+$("#title").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); }});
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-cp]");
+  if(b) copy(b.parentElement.querySelector("code").textContent);
+});
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape"){ $("#mask").classList.remove("on"); $("#statMask").classList.remove("on"); }
+  if((e.metaKey||e.ctrlKey) && e.key==="n"){ e.preventDefault(); newConv(); }
+});
+addEventListener("beforeunload", e=>{ if(streaming){ e.preventDefault(); e.returnValue=""; } });
+
+/* iOS Safari shrinks the VISUAL viewport when the keyboard opens but leaves
+   100dvh alone — which would bury the composer behind the keyboard. Pin the
+   app box to the visual viewport instead. */
+(function(){
+  const vv = window.visualViewport; if(!vv) return;
+  const app = document.getElementById("app");
+  let raf = 0;
+  const fit = ()=>{
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(()=>{
+      app.style.height = vv.height + "px";
+      if(window.scrollY) window.scrollTo(0,0);
+    });
+  };
+  vv.addEventListener("resize", fit);
+  vv.addEventListener("scroll", fit);
+  addEventListener("orientationchange", ()=>setTimeout(fit,300));
+  fit();
+})();
+
+/* boot */
+const narrow = ()=> innerWidth<=720;
+if(narrow()) $("#side").classList.add("hidden");   // otherwise it covers the chat
+// on a phone, tapping the chat area closes the drawer
+$("#main").addEventListener("pointerdown", e=>{
+  if(narrow() && !$("#side").classList.contains("hidden")) $("#side").classList.add("hidden");
+}, true);
+addEventListener("resize", ()=>{ if(!narrow()) $("#side").classList.remove("hidden"); });
+applyTheme();
+if(!S.convs.length) newConv(); else renderAll();
+autoSize();
+if(!storageOK) toast("这个浏览器不让本地存储——记录只在内存里，关页面就没了，请常导出");
+</script>
+</body>
+</html>
