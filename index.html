@@ -135,6 +135,84 @@ input,textarea,select{font:inherit;color:inherit}
 .bubble table{border-collapse:collapse;margin:.8em 0;font-size:13.5px;display:block;overflow-x:auto}
 .bubble th,.bubble td{border:1px solid var(--line);padding:6px 10px;text-align:left}
 .bubble th{background:var(--bg-2);font-weight:600}
+/* ══ bottom sheet (iOS-style grouped pickers) ══ */
+#sheet{position:fixed;inset:0;z-index:60;display:none}
+#sheet.on{display:block}
+#sheet .veil{position:absolute;inset:0;background:rgba(0,0,0,.45);
+  backdrop-filter:blur(2px);opacity:0;transition:opacity .22s}
+#sheet.in .veil{opacity:1}
+.sh-box{position:absolute;left:0;right:0;bottom:0;background:var(--bg);
+  border-top-left-radius:22px;border-top-right-radius:22px;
+  max-height:92dvh;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -8px 40px rgba(0,0,0,.3)}
+#sheet.in .sh-box{transform:translateY(0)}
+@media (min-width:721px){
+  .sh-box{left:50%;right:auto;bottom:auto;top:50%;width:560px;border-radius:20px;
+    max-height:86dvh;transform:translate(-50%,-46%) scale(.97);opacity:0;
+    transition:transform .2s ease,opacity .2s ease}
+  #sheet.in .sh-box{transform:translate(-50%,-50%) scale(1);opacity:1}
+}
+.sh-grab{width:38px;height:4px;border-radius:99px;background:var(--line-2);
+  margin:9px auto 2px;flex:0 0 auto}
+@media (min-width:721px){ .sh-grab{display:none} }
+.sh-head{display:flex;align-items:center;gap:8px;padding:8px 12px 10px;flex:0 0 auto;
+  border-bottom:1px solid var(--line)}
+.sh-title{flex:1;text-align:center;font-size:16px;font-weight:600}
+.sh-ico{width:34px;height:34px;border-radius:99px;background:var(--bg-2);color:var(--fg-2);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.sh-ico[hidden]{visibility:hidden;display:flex}
+.sh-ico:hover{background:var(--bg-3);color:var(--fg)}
+.sh-ico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.sh-body{overflow-y:auto;padding:4px 16px 8px;-webkit-overflow-scrolling:touch}
+.sh-screen[hidden]{display:none}
+.sh-label{font-size:11.5px;color:var(--fg-3);letter-spacing:.06em;
+  margin:18px 4px 7px;text-transform:none}
+.sh-note{font-size:11.5px;color:var(--fg-3);line-height:1.6;margin:7px 4px 0}
+.sh-note code{font-family:var(--mono);background:var(--bg-3);padding:1px 4px;border-radius:4px}
+
+/* grouped rows */
+.grp{background:var(--bg-2);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:13px 14px;border-bottom:1px solid var(--line);background:none}
+.grp .row:last-child{border-bottom:none}
+button.row:hover{background:var(--bg-3)}
+button.row:active{background:var(--bg-3)}
+.rw{flex:1;min-width:0}
+.rt{font-size:14.5px;font-weight:500;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.rs{font-size:12px;color:var(--fg-3);margin-top:3px;line-height:1.5}
+.rv{font-size:13.5px;color:var(--fg-3);font-family:var(--mono);max-width:46%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 0 auto}
+.chev{color:var(--fg-3);font-size:19px;line-height:1;flex:0 0 auto}
+.tick{width:19px;height:19px;flex:0 0 auto;stroke:var(--accent);fill:none;stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.row.sel .tick{opacity:1}
+.row.sel .rt{color:var(--accent)}
+.bdg{font-size:10.5px;font-weight:400;padding:2px 7px;border-radius:99px;
+  background:var(--bg-3);color:var(--fg-3);border:1px solid var(--line-2)}
+.bdg.warn{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.row.rowinput{padding:10px 14px;display:flex;gap:10px;align-items:center}
+.row.rowinput label{font-size:14px;color:var(--fg-2);flex:1}
+.row.rowinput input,.row.rowinput textarea{background:none;border:none;outline:none;
+  width:100%;font-size:15px;color:var(--fg);padding:3px 0}
+.row.rowinput input[type=number]{text-align:right;font-family:var(--mono);max-width:110px;flex:0 0 auto}
+.row.rowinput textarea{resize:vertical;min-height:76px;line-height:1.65;font-family:inherit}
+.sh-row2{display:flex;gap:8px;margin-top:10px}
+.sh-row2 input{flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-2);
+  border-radius:11px;padding:11px 13px;outline:none;font-size:15px}
+.sh-row2 input:focus{border-color:var(--accent)}
+.sh-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--line-2);
+  color:var(--fg-2);font-size:14.5px;text-align:center;margin-top:16px}
+.sh-btn:hover{background:var(--bg-2);color:var(--fg)}
+.sh-btn.thin{width:auto;padding:11px 16px;margin:0;flex:0 0 auto}
+.sh-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500;margin:0}
+.sh-btn.primary:hover{opacity:.92;background:var(--accent);color:#fff}
+.sh-foot{flex:0 0 auto;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid var(--line);background:var(--bg)}
+@media (hover:none){ .rt{font-size:15.5px} .rs{font-size:12.5px}
+  .row{padding:15px 14px} .row.rowinput input,.row.rowinput textarea{font-size:16px} }
+
 /* thinking block */
 .think{margin-bottom:10px;border:1px solid var(--line);border-radius:10px;
   background:var(--bg-2);overflow:hidden}
@@ -255,15 +333,15 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 .muted{color:var(--fg-3);font-size:12px;line-height:1.7}
 
 /* settings modal */
-#mask,.mask2{position:fixed;inset:0;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);
+.mask2{position:fixed;inset:0;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);
   display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
-#mask.on,.mask2.on{display:flex}
-#panel,#panel2{background:var(--bg);border:1px solid var(--line);border-radius:16px;width:100%;
+.mask2.on{display:flex}
+#panel2{background:var(--bg);border:1px solid var(--line);border-radius:16px;width:100%;
   max-width:520px;max-height:88dvh;overflow-y:auto;padding:22px 24px 24px;
   box-shadow:0 18px 50px rgba(0,0,0,.28)}
 #panel2{max-width:600px}
-#panel h2,#panel2 h2{margin:0 0 3px;font-size:17px;font-weight:600}
-#panel .sub,#panel2 .sub{font-size:12.5px;color:var(--fg-3);margin-bottom:18px}
+#panel2 h2{margin:0 0 3px;font-size:17px;font-weight:600}
+#panel2 .sub{font-size:12.5px;color:var(--fg-3);margin-bottom:18px}
 .field{margin-bottom:15px}
 .field label{display:block;font-size:12.5px;color:var(--fg-2);margin-bottom:5px;font-weight:500}
 .field input,.field textarea,.field select{width:100%;background:var(--bg-2);
@@ -277,6 +355,12 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
   border:1px solid var(--line-2)}
 .seg button{flex:1;padding:7px;border-radius:7px;font-size:13px;color:var(--fg-2);text-align:center}
 .seg button.on{background:var(--accent);color:#fff;font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.chip{font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);
+  color:var(--fg-2);font-family:var(--mono);white-space:nowrap;line-height:1.4}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
+.chips .empty{font-size:11.5px;color:var(--fg-3);line-height:1.55}
 .panel-foot{display:flex;gap:9px;margin-top:20px}
 .btn{padding:10px 16px;border-radius:9px;font-size:14px;text-align:center;
   border:1px solid var(--line-2);color:var(--fg-2)}
@@ -297,6 +381,7 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 #empty kbd{font-family:var(--mono);font-size:11.5px;background:var(--bg-3);
   padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
 
+#sheet.on ~ #toast{bottom:auto;top:calc(18px + env(safe-area-inset-top,0px))}
 #toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,14px);background:var(--fg);
   color:var(--bg);padding:9px 17px;border-radius:10px;font-size:13px;opacity:0;
   transition:.2s;pointer-events:none;z-index:99;max-width:80vw;text-align:center}
@@ -382,92 +467,82 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
   </main>
 </div>
 
-<div id="mask">
-  <div id="panel">
-    <h2>设置</h2>
-    <div class="sub">全部只存在这台机器的浏览器里，不上传任何地方。</div>
-
-    <div class="field">
-      <label>通道</label>
-      <div class="seg" id="segProv">
-        <button data-p="anthropic" class="on">Anthropic（已验证可直连）</button>
-        <button data-p="openai">OpenAI 兼容</button>
-      </div>
-      <div class="note" id="provNote"></div>
+<div id="sheet">
+  <div class="veil"></div>
+  <div class="sh-box">
+    <div class="sh-grab"></div>
+    <div class="sh-head">
+      <button class="sh-ico" id="shBack" hidden><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="sh-title" id="shTitle">设置</div>
+      <button class="sh-ico" id="shClose"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
 
-    <div class="field" id="fBase" style="display:none">
-      <label>接口地址 Base URL</label>
-      <input id="iBase" placeholder="https://api.deepseek.com/v1" spellcheck="false">
-      <div class="note">填到 <code>/v1</code> 为止。常见：DeepSeek <code>https://api.deepseek.com/v1</code>、硅基流动 <code>https://api.siliconflow.cn/v1</code>、本地 Ollama <code>http://localhost:11434/v1</code>。</div>
+    <div class="sh-body">
+      <section class="sh-screen" data-sc="main">
+        <div class="sh-label">通道</div>
+        <div class="grp" id="grpProv"></div>
+        <div class="sh-note" id="provNote"></div>
+
+        <div id="wrapBase">
+          <div class="sh-label">接口地址</div>
+          <div class="grp"><div class="row rowinput">
+            <input id="iBase" placeholder="https://api.deepseek.com/v1" spellcheck="false" autocapitalize="off">
+          </div></div>
+          <div class="sh-note">填到 <code>/v1</code> 为止。DeepSeek 是 <code>https://api.deepseek.com/v1</code>。</div>
+        </div>
+
+        <div class="sh-label">API Key</div>
+        <div class="grp"><div class="row rowinput">
+          <input id="iKey" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false">
+        </div></div>
+        <div class="sh-note">只存在这台机器的浏览器里，不上传任何地方。机器别乱借。</div>
+
+        <div class="sh-label">模型与思考</div>
+        <div class="grp">
+          <button class="row" id="rowModel">
+            <div class="rw"><div class="rt">模型</div></div>
+            <span class="rv" id="rowModelVal"></span><span class="chev">›</span>
+          </button>
+          <button class="row" id="rowEffort">
+            <div class="rw"><div class="rt">思考档位</div></div>
+            <span class="rv" id="rowEffortVal"></span><span class="chev">›</span>
+          </button>
+        </div>
+
+        <div class="sh-label">系统提示词（这个窗口的人设／规矩）</div>
+        <div class="grp"><div class="row rowinput">
+          <textarea id="iSys" placeholder="留空就是干净的默认状态。"></textarea>
+        </div></div>
+
+        <div class="sh-label">进阶</div>
+        <div class="grp">
+          <div class="row rowinput"><label for="iMax">最大回复长度</label>
+            <input id="iMax" type="number" min="256" max="64000" step="256"></div>
+          <div class="row rowinput"><label for="iCtx">携带上下文条数</label>
+            <input id="iCtx" type="number" min="2" max="200" step="2"></div>
+        </div>
+        <div class="sh-note">上下文条数越大越贵。</div>
+
+        <button class="sh-btn" id="btnTest">连接自检</button>
+        <div id="testOut"></div>
+      </section>
+
+      <section class="sh-screen" data-sc="model" hidden>
+        <div class="grp" id="grpModels"></div>
+        <div class="sh-row2">
+          <input id="iModel" placeholder="或者直接打型号 ID" spellcheck="false" autocapitalize="off">
+          <button class="sh-btn thin" id="btnModels">拉列表</button>
+        </div>
+        <div class="sh-note">不写死型号，点「拉列表」直接问接口要，永远不会过期。</div>
+      </section>
+
+      <section class="sh-screen" data-sc="effort" hidden>
+        <div class="grp" id="grpEffort"></div>
+        <div class="sh-note" id="noteEffort"></div>
+      </section>
     </div>
 
-    <div class="field">
-      <label>API Key</label>
-      <input id="iKey" type="password" placeholder="sk-…" spellcheck="false" autocomplete="off">
-      <div class="note">存在本地 localStorage。谁能碰你这台机器谁就能看到，跟存记事本一个级别——机器别乱借。</div>
-    </div>
-
-    <div class="field">
-      <label>模型</label>
-      <div class="row">
-        <input id="iModel" placeholder="模型 ID" spellcheck="false" list="modelList">
-        <button class="btn" id="btnModels" style="flex:0 0 auto">拉列表</button>
-      </div>
-      <datalist id="modelList"></datalist>
-      <div class="note">不写死型号，点「拉列表」直接问接口要，永远不会过期。</div>
-    </div>
-
-    <div class="field">
-      <label>系统提示词（这个窗口的人设／规矩）</label>
-      <textarea id="iSys" placeholder="留空就是干净的默认状态。"></textarea>
-    </div>
-
-    <div class="row">
-      <div class="field">
-        <label>最大回复长度</label>
-        <input id="iMax" type="number" min="256" max="64000" step="256">
-      </div>
-      <div class="field">
-        <label>携带上下文条数</label>
-        <input id="iCtx" type="number" min="2" max="200" step="2">
-        <div class="note">越大越贵。</div>
-      </div>
-    </div>
-
-    <div class="field" id="fDsThink" style="display:none">
-      <label>思考档位</label>
-      <select id="iDsThink">
-        <option value="auto">由模型定（不发送参数）</option>
-        <option value="off">关 —— 最省</option>
-        <option value="low">低</option>
-        <option value="high">高（DeepSeek 默认）</option>
-        <option value="max">最大</option>
-      </select>
-      <div class="note">DeepSeek V4 <b>默认就是开着的、力度 high</b>，思考算在输出里，每条都在花。
-        铺场景写对话选「低」或「关」，要它推转折再上「高／最大」。<br>
-        别的 OpenAI 兼容服务可能不认这个参数——报错就调回「由模型定」。</div>
-    </div>
-
-    <div class="field" id="fThink">
-      <label>扩展思考</label>
-      <div class="row">
-        <select id="iThinkOn">
-          <option value="0">关</option>
-          <option value="1">开</option>
-        </select>
-        <input id="iThinkBudget" type="number" min="1024" max="60000" step="1024" placeholder="思考预算">
-      </div>
-      <div class="note" id="thinkNote"></div>
-    </div>
-
-    <button class="btn" id="btnTest" style="width:100%">连接自检</button>
-    <div id="testOut"></div>
-
-    <div class="panel-foot">
-      <button class="btn primary" id="btnSave">保存</button>
-      <button class="btn" id="btnClose">关闭</button>
-    </div>
+    <div class="sh-foot"><button class="sh-btn primary" id="btnSave">保存</button></div>
   </div>
 </div>
 
@@ -522,7 +597,8 @@ const DEFAULTS = {
   ctxLimit:40,
   thinkOn:false,
   thinkBudget:4000,
-  dsThink:"auto",    // OpenAI 兼容通道的思考档位: auto(不发送)/off/low/high/max
+  dsThink:"auto",
+  models:[],         // 「拉列表」取回来的型号，存着免得每次重拉    // OpenAI 兼容通道的思考档位: auto(不发送)/off/low/high/max
   theme:"auto",
   sumAt:24,          // suggest compacting once the live context passes this many messages
   stats:[],          // {t, m:model, p:provider, i:inTokens, o:outTokens}
@@ -1038,19 +1114,112 @@ function scrollDown(){
 let streaming = false;
 let ctl = null;
 
-function providerNote(){
-  const p = S.provider;
-  $("#provNote").innerHTML = p==="anthropic"
-    ? "已实测：这条通道允许浏览器直连，本地 <code>file://</code> 打开也放行。"
-    : "已实测可用（DeepSeek）。个别服务会拦 <code>file://</code>，先按「连接自检」，被拦了见下方说明。";
-  $("#fBase").style.display = p==="openai" ? "" : "none";
+// ── model descriptions: only for IDs I actually looked up. No invented blurbs. ──
+const MODEL_NOTE = {
+  "deepseek-v4-pro":"最强。复杂推理、长文审稿、要它把好多条线一起拎着想的时候用",
+  "deepseek-v4-flash":"快而省。铺场景、写对话、日常改字，够用了",
+  "deepseek-v4-flash-vision-exp":"带视觉的实验版，文字能力对齐 Flash（小窗目前还不能传图）"
+};
+const modelNote = id => MODEL_NOTE[id] || "";
 
-  const anth = p==="anthropic";
-  $("#fThink").style.display = anth ? "" : "none";
-  $("#fDsThink").style.display = anth ? "none" : "";
-  $("#thinkNote").innerHTML = anth
-    ? "开了之后先出思考再出正文。预算越大想得越久也越贵；「最大回复长度」会自动抬到预算之上，不用你操心。"
-    : "";
+const EFFORT_ANTH = [
+  {v:"off",   t:"关",   s:"不思考，最省"},
+  {v:"2048",  t:"低",   s:"预算 2k，轻量推敲"},
+  {v:"6000",  t:"高",   s:"预算 6k，日常够用"},
+  {v:"16000", t:"最大", s:"预算 16k，留给真要动脑子的", w:1}
+];
+const EFFORT_DS = [
+  {v:"auto", t:"由模型定", s:"不发送参数，随服务端默认"},
+  {v:"off",  t:"关",     s:"最省。铺场景、改字用这个"},
+  {v:"low",  t:"低",     s:"想一点点"},
+  {v:"high", t:"高",     s:"DeepSeek 的默认档", b:"默认"},
+  {row:1, v:"max", t:"最大", s:"最贵。推情节转折、查前后矛盾再用", w:1}
+];
+
+/* ── one reusable grouped-row renderer ── */
+function mkRow(o){
+  const b = document.createElement("button"); b.className = "row" + (o.sel ? " sel" : "");
+  const w = document.createElement("div"); w.className = "rw";
+  const t = document.createElement("div"); t.className = "rt"; t.textContent = o.title;
+  if(o.badge){
+    const g = document.createElement("span");
+    g.className = "bdg" + (o.warn ? " warn" : ""); g.textContent = o.badge;
+    t.appendChild(g);
+  }
+  w.appendChild(t);
+  if(o.sub){ const d=document.createElement("div"); d.className="rs"; d.textContent=o.sub; w.appendChild(d); }
+  b.appendChild(w);
+  const tk = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  tk.setAttribute("class","tick"); tk.setAttribute("viewBox","0 0 24 24");
+  const pa = document.createElementNS("http://www.w3.org/2000/svg","path");
+  pa.setAttribute("d","M20 6L9 17l-5-5"); tk.appendChild(pa);
+  b.appendChild(tk);
+  b.onclick = o.on;
+  return b;
+}
+function fillGrp(el, items){ el.innerHTML=""; items.forEach(o=>el.appendChild(mkRow(o))); }
+
+function effortLabel(){
+  if(S.provider==="anthropic"){
+    if(!S.thinkOn) return "关";
+    const hit = EFFORT_ANTH.find(e=>e.v===String(S.thinkBudget));
+    return hit ? hit.t : fmtN(S.thinkBudget);
+  }
+  return DS_LABEL[S.dsThink] || "由模型定";
+}
+
+function providerNote(){
+  const p = S.provider, anth = p==="anthropic";
+  fillGrp($("#grpProv"), [
+    {title:"Anthropic", sub:"已实测：浏览器可直连", sel:anth,
+     on:()=>{ S.provider="anthropic"; save(true); providerNote(); paintPill(); }},
+    {title:"OpenAI 兼容", sub:"DeepSeek、硅基流动、本地 Ollama 都走这条", sel:!anth,
+     on:()=>{ S.provider="openai"; save(true); providerNote(); paintPill(); }}
+  ]);
+  $("#provNote").innerHTML = anth
+    ? "这条通道允许浏览器直连，本地 <code>file://</code> 打开也放行。"
+    : "已实测可用（DeepSeek）。个别服务会拦，先按「连接自检」。";
+  $("#wrapBase").style.display = anth ? "none" : "";
+  $("#rowModelVal").textContent  = S.model || "未设";
+  $("#rowEffortVal").textContent = effortLabel();
+}
+
+/* ── model picker screen ── */
+function paintModels(){
+  const cur = S.model;
+  const list = S.models || [];
+  if(!list.length){
+    $("#grpModels").innerHTML =
+      '<div class="row"><div class="rw"><div class="rs">还没拉过 —— 点下面「拉列表」，'+
+      '可用型号会全部列在这儿。</div></div></div>';
+  }else{
+    fillGrp($("#grpModels"), list.map(id=>({
+      title:id, sub:modelNote(id), sel:id===cur,
+      on:()=>{ S.model=id; $("#iModel").value=id; save(true);
+               paintModels(); providerNote(); renderAll(); }
+    })));
+  }
+  $("#iModel").value = cur || "";
+}
+
+/* ── thinking effort screen ── */
+function paintEffort(){
+  const anth = S.provider==="anthropic";
+  const items = anth ? EFFORT_ANTH : EFFORT_DS;
+  const cur = anth ? (S.thinkOn ? String(S.thinkBudget) : "off") : S.dsThink;
+  fillGrp($("#grpEffort"), items.map(e=>({
+    title:e.t, sub:e.s, sel:e.v===cur, badge:e.b || (e.w?"更费额度":""), warn:!!e.w,
+    on:()=>{
+      if(anth){
+        if(e.v==="off") S.thinkOn=false;
+        else { S.thinkOn=true; S.thinkBudget=parseInt(e.v); }
+      } else S.dsThink = e.v;
+      save(true); paintEffort(); providerNote(); paintPill();
+    }
+  })));
+  $("#noteEffort").innerHTML = anth
+    ? "思考的 token 算在输出里。「最大回复长度」会自动抬到预算之上，不用你操心。"
+    : "DeepSeek V4 <b>默认就开着、力度 high</b>，每条都在烧输出 token。别的 OpenAI 兼容服务可能不认这个参数，报错就调回「由模型定」。";
 }
 
 async function fetchModels(){
@@ -1073,10 +1242,10 @@ async function fetchModels(){
     if(!r.ok) throw new Error("HTTP "+r.status+" "+(await r.text()).slice(0,200));
     const j = await r.json();
     const ids = (j.data||[]).map(m=>m.id).filter(Boolean).sort();
-    const dl = $("#modelList"); dl.innerHTML="";
-    ids.forEach(id=>{ const o=document.createElement("option"); o.value=id; dl.appendChild(o); });
-    if(!$("#iModel").value && ids.length) $("#iModel").value = ids[0];
-    showTest(true, "拿到 "+ids.length+" 个模型，点模型框看下拉。");
+    S.models = ids; save(true);
+    if(!S.model && ids.length){ S.model = ids[0]; }
+    paintModels(); providerNote(); renderAll();
+    toast("拿到 "+ids.length+" 个模型");
   }catch(e){ showTest(false, corsHint(e)); }
 }
 
@@ -1318,6 +1487,7 @@ function doImport(file){
       ["provider","baseURL","model","system","maxTokens","ctxLimit","theme",
        "thinkOn","thinkBudget","sumAt","dsThink"]
         .forEach(k=>{ if(j[k]!==undefined && j[k]!=="") S[k]=j[k]; });
+      if(Array.isArray(j.models) && j.models.length) S.models = j.models;
       if(j.prices) S.prices = Object.assign({}, j.prices, S.prices);
       if(Array.isArray(j.stats)){                    // merge flows, drop exact dupes
         const seen = new Set(S.stats.map(s=>s.t+"|"+s.m+"|"+s.i+"|"+s.o));
@@ -1436,15 +1606,36 @@ function applyTheme(){
   if(S.theme==="auto") r.removeAttribute("data-theme");
   else r.setAttribute("data-theme",S.theme);
 }
+let shStack = ["main"];
+function shGo(sc, title){
+  shStack.push(sc);
+  document.querySelectorAll(".sh-screen").forEach(e=>e.hidden = e.dataset.sc!==sc);
+  $("#shTitle").textContent = title;
+  $("#shBack").hidden = shStack.length<2;
+  $(".sh-body").scrollTop = 0;
+}
+function shBack(){
+  if(shStack.length<2) return closeSheet();
+  shStack.pop();
+  const sc = shStack[shStack.length-1];
+  document.querySelectorAll(".sh-screen").forEach(e=>e.hidden = e.dataset.sc!==sc);
+  $("#shTitle").textContent = "设置";
+  $("#shBack").hidden = true;
+  $(".sh-body").scrollTop = 0;
+}
 function openSet(){
-  $("#iKey").value=S.key; $("#iModel").value=S.model; $("#iSys").value=S.system;
+  $("#iKey").value=S.key; $("#iSys").value=S.system;
   $("#iMax").value=S.maxTokens; $("#iCtx").value=S.ctxLimit; $("#iBase").value=S.baseURL;
-  $("#iThinkOn").value = S.thinkOn ? "1" : "0"; $("#iThinkBudget").value = S.thinkBudget;
-  $("#iDsThink").value = S.dsThink || "auto";
-  document.querySelectorAll("#segProv button").forEach(b=>b.classList.toggle("on",b.dataset.p===S.provider));
-  providerNote();
+  $("#iModel").value=S.model;
+  shStack=["main"]; shGo("main","设置"); shStack=["main"]; $("#shBack").hidden=true;
+  providerNote(); paintModels(); paintEffort();
   $("#testOut").className="";
-  $("#mask").classList.add("on");
+  $("#sheet").classList.add("on");
+  requestAnimationFrame(()=>$("#sheet").classList.add("in"));
+}
+function closeSheet(){
+  $("#sheet").classList.remove("in");
+  setTimeout(()=>$("#sheet").classList.remove("on"), 240);
 }
 function syncFromForm(){
   S.key=$("#iKey").value.trim();
@@ -1453,18 +1644,18 @@ function syncFromForm(){
   S.baseURL=$("#iBase").value.trim();
   S.maxTokens=Math.max(256,parseInt($("#iMax").value)||4096);
   S.ctxLimit=Math.max(2,parseInt($("#iCtx").value)||40);
-  S.thinkOn = $("#iThinkOn").value==="1";
-  S.thinkBudget = Math.min(60000, Math.max(1024, parseInt($("#iThinkBudget").value)||4000));
-  S.dsThink = $("#iDsThink").value || "auto";
 }
 
 /* ============ wire up ============ */
 $("#newChat").onclick = newConv;
 $("#btnSide").onclick = ()=>$("#side").classList.toggle("hidden");
 $("#btnSet").onclick = openSet;
-$("#btnClose").onclick = ()=>$("#mask").classList.remove("on");
-$("#mask").onclick = e=>{ if(e.target.id==="mask") $("#mask").classList.remove("on"); };
-$("#btnSave").onclick = ()=>{ syncFromForm(); save(true); renderAll(); $("#mask").classList.remove("on"); toast("已保存"); };
+$("#shClose").onclick = closeSheet;
+$("#shBack").onclick = shBack;
+$("#sheet .veil").onclick = closeSheet;
+$("#rowModel").onclick  = ()=>{ paintModels(); shGo("model","选择模型"); };
+$("#rowEffort").onclick = ()=>{ paintEffort(); shGo("effort","思考档位"); };
+$("#btnSave").onclick = ()=>{ syncFromForm(); save(true); renderAll(); closeSheet(); toast("已保存"); };
 $("#btnTest").onclick = testConn;
 $("#btnModels").onclick = fetchModels;
 $("#pillThink").onclick = ()=>{
@@ -1497,11 +1688,6 @@ $("#btnTheme").onclick = ()=>{
   S.theme = S.theme==="auto" ? "light" : S.theme==="light" ? "dark" : "auto";
   applyTheme(); save(true); toast("主题："+({auto:"跟随系统",light:"浅色",dark:"深色"})[S.theme]);
 };
-document.querySelectorAll("#segProv button").forEach(b=>{
-  b.onclick = ()=>{ S.provider=b.dataset.p;
-    document.querySelectorAll("#segProv button").forEach(x=>x.classList.toggle("on",x===b));
-    providerNote(); paintPill(); };
-});
 $("#send").onclick = submit;
 $("#input").addEventListener("keydown", e=>{
   if(e.key==="Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); submit(); }
@@ -1518,7 +1704,10 @@ document.addEventListener("click", e=>{
   if(b) copy(b.parentElement.querySelector("code").textContent);
 });
 document.addEventListener("keydown", e=>{
-  if(e.key==="Escape"){ $("#mask").classList.remove("on"); $("#statMask").classList.remove("on"); }
+  if(e.key==="Escape"){
+    if($("#sheet").classList.contains("on")) shStack.length>1 ? shBack() : closeSheet();
+    $("#statMask").classList.remove("on");
+  }
   if((e.metaKey||e.ctrlKey) && e.key==="n"){ e.preventDefault(); newConv(); }
 });
 addEventListener("beforeunload", e=>{ if(streaming){ e.preventDefault(); e.returnValue=""; } });
