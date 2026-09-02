@@ -435,6 +435,20 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
       </div>
     </div>
 
+    <div class="field" id="fDsThink" style="display:none">
+      <label>思考档位</label>
+      <select id="iDsThink">
+        <option value="auto">由模型定（不发送参数）</option>
+        <option value="off">关 —— 最省</option>
+        <option value="low">低</option>
+        <option value="high">高（DeepSeek 默认）</option>
+        <option value="max">最大</option>
+      </select>
+      <div class="note">DeepSeek V4 <b>默认就是开着的、力度 high</b>，思考算在输出里，每条都在花。
+        铺场景写对话选「低」或「关」，要它推转折再上「高／最大」。<br>
+        别的 OpenAI 兼容服务可能不认这个参数——报错就调回「由模型定」。</div>
+    </div>
+
     <div class="field" id="fThink">
       <label>扩展思考</label>
       <div class="row">
@@ -508,6 +522,7 @@ const DEFAULTS = {
   ctxLimit:40,
   thinkOn:false,
   thinkBudget:4000,
+  dsThink:"auto",    // OpenAI 兼容通道的思考档位: auto(不发送)/off/low/high/max
   theme:"auto",
   sumAt:24,          // suggest compacting once the live context passes this many messages
   stats:[],          // {t, m:model, p:provider, i:inTokens, o:outTokens}
@@ -987,14 +1002,21 @@ function msgEl(m, idx){
   return d;
 }
 
+const DS_STEPS = ["auto","off","low","high","max"];
+const DS_LABEL = {auto:"由模型定", off:"关", low:"低", high:"高", max:"最大"};
 function paintPill(){
   const p = $("#pillThink"), anth = S.provider==="anthropic";
-  p.classList.toggle("on", anth && S.thinkOn);
-  $("#pillTxt").textContent = anth
-    ? (S.thinkOn ? "思考 "+fmtN(S.thinkBudget) : "思考 关")
-    : "思考 由模型定";
-  p.title = anth ? "点一下开关扩展思考（Anthropic）"
-                 : "OpenAI 兼容通道由模型决定：换成 deepseek-reasoner 这类推理模型就自动有";
+  if(anth){
+    p.classList.toggle("on", S.thinkOn);
+    $("#pillTxt").textContent = S.thinkOn ? "思考 "+fmtN(S.thinkBudget) : "思考 关";
+    p.title = "点一下开关扩展思考（Anthropic）";
+  }else{
+    p.classList.toggle("on", S.dsThink!=="auto" && S.dsThink!=="off");
+    $("#pillTxt").textContent = "思考 "+DS_LABEL[S.dsThink];
+    p.title = "DeepSeek V4 默认就开着思考、力度 high，每条都在烧输出 token。\n"+
+      "点一下换档：由模型定 → 关 → 低 → 高 → 最大\n"+
+      "非 DeepSeek 的服务可能不认这个参数，认不出就留在「由模型定」。";
+  }
 }
 
 function renderAll(){
@@ -1020,11 +1042,12 @@ function providerNote(){
   const p = S.provider;
   $("#provNote").innerHTML = p==="anthropic"
     ? "已实测：这条通道允许浏览器直连，本地 <code>file://</code> 打开也放行。"
-    : "已由沐沐实测：DeepSeek 这条通道本地打开可用。个别服务会拦 <code>file://</code>，先按「连接自检」，被拦了见下方说明。";
+    : "已实测可用（DeepSeek）。个别服务会拦 <code>file://</code>，先按「连接自检」，被拦了见下方说明。";
   $("#fBase").style.display = p==="openai" ? "" : "none";
 
   const anth = p==="anthropic";
-  $("#fThink").style.display = anth ? "" : "none";   // only Anthropic needs a switch
+  $("#fThink").style.display = anth ? "" : "none";
+  $("#fDsThink").style.display = anth ? "none" : "";
   $("#thinkNote").innerHTML = anth
     ? "开了之后先出思考再出正文。预算越大想得越久也越贵；「最大回复长度」会自动抬到预算之上，不用你操心。"
     : "";
@@ -1110,10 +1133,18 @@ function buildReq(msgs, opt){
     };
   }
   const full = sys ? [{role:"system",content:sys}, ...msgs] : msgs;
+  const body = { model:S.model, max_tokens:maxTokens, messages:full, stream };
+  // DeepSeek V4 defaults to thinking ENABLED at effort "high" — that is billed as
+  // output on every single turn. "auto" sends nothing (safe for other providers
+  // that would 400 on an unknown field); any other setting takes explicit control.
+  if(!opt.noThink && S.dsThink && S.dsThink!=="auto"){
+    if(S.dsThink==="off") body.thinking = { type:"disabled" };
+    else { body.thinking = { type:"enabled" }; body.reasoning_effort = S.dsThink; }
+  }
   return {
     url:(S.baseURL||"https://api.openai.com/v1").replace(/\/$/,"")+"/chat/completions",
     headers:{ "content-type":"application/json", "authorization":"Bearer "+S.key },
-    body:{ model:S.model, max_tokens:maxTokens, messages:full, stream }
+    body
   };
 }
 
@@ -1285,7 +1316,7 @@ function doImport(file){
       const add = j.convs.filter(c=>!mine.has(c.id));
       S.convs = [...add, ...S.convs];
       ["provider","baseURL","model","system","maxTokens","ctxLimit","theme",
-       "thinkOn","thinkBudget","sumAt"]
+       "thinkOn","thinkBudget","sumAt","dsThink"]
         .forEach(k=>{ if(j[k]!==undefined && j[k]!=="") S[k]=j[k]; });
       if(j.prices) S.prices = Object.assign({}, j.prices, S.prices);
       if(Array.isArray(j.stats)){                    // merge flows, drop exact dupes
@@ -1409,6 +1440,7 @@ function openSet(){
   $("#iKey").value=S.key; $("#iModel").value=S.model; $("#iSys").value=S.system;
   $("#iMax").value=S.maxTokens; $("#iCtx").value=S.ctxLimit; $("#iBase").value=S.baseURL;
   $("#iThinkOn").value = S.thinkOn ? "1" : "0"; $("#iThinkBudget").value = S.thinkBudget;
+  $("#iDsThink").value = S.dsThink || "auto";
   document.querySelectorAll("#segProv button").forEach(b=>b.classList.toggle("on",b.dataset.p===S.provider));
   providerNote();
   $("#testOut").className="";
@@ -1423,6 +1455,7 @@ function syncFromForm(){
   S.ctxLimit=Math.max(2,parseInt($("#iCtx").value)||40);
   S.thinkOn = $("#iThinkOn").value==="1";
   S.thinkBudget = Math.min(60000, Math.max(1024, parseInt($("#iThinkBudget").value)||4000));
+  S.dsThink = $("#iDsThink").value || "auto";
 }
 
 /* ============ wire up ============ */
@@ -1435,10 +1468,17 @@ $("#btnSave").onclick = ()=>{ syncFromForm(); save(true); renderAll(); $("#mask"
 $("#btnTest").onclick = testConn;
 $("#btnModels").onclick = fetchModels;
 $("#pillThink").onclick = ()=>{
-  if(S.provider!=="anthropic")
-    return toast("这条通道由模型决定 —— 换成 deepseek-reasoner 这类推理模型就自动带思考");
-  S.thinkOn = !S.thinkOn; save(true); paintPill();
-  toast(S.thinkOn ? "思考开了，预算 "+S.thinkBudget+" tok（算在输出里）" : "思考关了");
+  if(S.provider==="anthropic"){
+    S.thinkOn = !S.thinkOn; save(true); paintPill();
+    return toast(S.thinkOn ? "思考开了，预算 "+S.thinkBudget+" tok（算在输出里）" : "思考关了");
+  }
+  S.dsThink = DS_STEPS[(DS_STEPS.indexOf(S.dsThink)+1) % DS_STEPS.length];
+  save(true); paintPill();
+  toast({auto:"不发思考参数，随服务端默认（DeepSeek 默认＝开·high）",
+         off:"思考关了，最省",
+         low:"思考 低 —— 铺场景、写对话够用",
+         high:"思考 高 —— DeepSeek 的默认档",
+         max:"思考 最大 —— 贵，留给真要动脑子的"}[S.dsThink]);
 };
 $("#btnSum").onclick = compact;
 $("#ctxHide").onclick = ()=>{ const c=active(); if(c){ c.ctxHushed=true; save(true); paintCtx(); } };
