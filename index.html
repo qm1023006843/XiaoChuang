@@ -278,6 +278,39 @@ button.row:active{background:var(--bg-3)}
   justify-content:space-between;gap:10px;align-items:center}
 #hintL{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 
+/* composer toolbar */
+#bar{max-width:760px;margin:8px auto 0;display:flex;align-items:center;gap:6px}
+.bic{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;
+  border:1px solid transparent;color:var(--fg-3);font-size:12px;white-space:nowrap;
+  transition:.15s;line-height:1.4}
+.bic:hover{background:var(--bg-2);color:var(--fg-2)}
+.bic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.bic.lit{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.bic.model{border:1px solid var(--line-2);font-family:var(--mono);font-size:11.5px;
+  max-width:44vw;overflow:hidden}
+.bic.model span{overflow:hidden;text-overflow:ellipsis}
+.bic.model:hover{border-color:var(--accent)}
+.bspace{flex:1}
+#pop{position:fixed;z-index:40;background:var(--bg);border:1px solid var(--line-2);
+  border-radius:14px;box-shadow:0 10px 34px rgba(0,0,0,.24);padding:6px;min-width:172px;
+  max-width:calc(100vw - 20px)}
+#pop[hidden]{display:none}
+#pop .ph{font-size:11px;color:var(--fg-3);letter-spacing:.05em;padding:7px 11px 5px}
+#pop .pi{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;
+  border-radius:9px;font-size:14px;text-align:left;color:var(--fg-2)}
+#pop .pi:hover{background:var(--bg-2);color:var(--fg)}
+#pop .pi.on{color:var(--accent);font-weight:500}
+#pop .pi .pd{width:16px;text-align:center;font-size:11px;flex:0 0 auto;opacity:.75}
+#pop .pi .pk{flex:1}
+#pop .pi .pt{opacity:0;color:var(--accent)}
+#pop .pi.on .pt{opacity:1}
+#pop .prow{display:flex;justify-content:space-between;gap:16px;padding:7px 11px;font-size:13px}
+#pop .prow span:last-child{font-family:var(--mono);color:var(--fg-2)}
+#pop .prow.tot{border-top:1px solid var(--line);margin-top:3px;padding-top:9px;font-weight:600}
+#pop .pnote{font-size:11px;color:var(--fg-3);padding:4px 11px 7px;line-height:1.55}
+@media (hover:none){ .bic{padding:8px 12px;font-size:12.5px} #pop .pi{padding:12px 12px;font-size:15px} }
+
 /* thinking pill */
 .pill{border:1px solid var(--line-2);border-radius:999px;padding:2.5px 10px;font-size:11px;
   color:var(--fg-3);display:inline-flex;align-items:center;gap:5px;transition:.15s;white-space:nowrap}
@@ -442,7 +475,7 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
       <div class="big">小 窗</div>
       <div class="small">没有服务器，没有埋点，没有第三方。<br>
         这一页就是全部，稿子只在你自己机器上。<br><br>
-        <kbd>Enter</kbd> 发送 · <kbd>Shift+Enter</kbd> 换行</div>
+        <span id="emptyKeys"></span></div>
     </div>
 
     <div id="composer">
@@ -456,12 +489,17 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
         <button id="send" title="发送">
           <svg viewBox="0 0 24 24" id="sendIco"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
       </div>
-      <div id="hint">
-        <span id="hintL">
-          <button class="pill" id="pillThink" title="思考开关"><i class="dot"></i><span id="pillTxt">思考</span></button>
-          <span id="ctxMini"></span>
-        </span>
-        <span id="cnt"></span>
+      <div id="bar">
+        <button class="bic" id="bThink" title="思考档位">
+          <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M4.2 7.5l2.6 1.5M17.2 15l2.6 1.5M4.2 16.5l2.6-1.5M17.2 9l2.6-1.5"/><circle cx="12" cy="12" r="3.2"/></svg>
+          <span id="bThinkTxt"></span></button>
+        <button class="bic" id="bSet" title="设置">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+        <button class="bic" id="bTok" title="token 估算">
+          <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          <span id="bTokTxt">0</span></button>
+        <div class="bspace"></div>
+        <button class="bic model" id="bModel"><span id="bModelTxt">未设模型</span></button>
       </div>
     </div>
   </main>
@@ -559,6 +597,7 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
   </div>
 </div>
 
+<div id="pop" hidden></div>
 <div id="toast"></div>
 <input type="file" id="fileIn" accept="application/json,.json" style="display:none">
 
@@ -734,7 +773,7 @@ function estTokens(s){
 }
 function pushStat(model,u){
   if(!u || (!u.in && !u.out)) return;
-  S.stats.push({t:Date.now(), m:model||"?", p:S.provider, i:u.in|0, o:u.out|0});
+  S.stats.push({t:Date.now(), m:model||"?", p:S.provider, i:u.in|0, o:u.out|0, h:u.hit|0});
   if(S.stats.length>3000) S.stats = S.stats.slice(-3000);
 }
 function fmtN(n){
@@ -749,10 +788,24 @@ function liveMsgs(c){
   const from = c.archived || 0;
   return c.msgs.slice(from).filter(m=>!m.error);
 }
-function buildHistory(c){
-  let live = liveMsgs(c).slice(-S.ctxLimit).map(m=>({role:m.role, content:m.content}));
-  while(live.length && live[0].role!=="user") live.shift();   // must open on a user turn
-  return live;
+// A sliding window moves its first message every single turn, so a prefix cache can
+// never hit. Anchor the start instead and only JUMP it forward when the window
+// overflows — the prefix then stays byte-identical for many turns in a row.
+function winStartOf(c, commit){
+  const live = liveMsgs(c);
+  let a = Math.min(Math.max(0, c.win|0), live.length);
+  if(live.length - a > S.ctxLimit){
+    a = Math.max(0, live.length - Math.ceil(S.ctxLimit/2));   // jump, don't slide
+    while(a>0 && live[a] && live[a].role!=="user") a--;       // land on a user turn
+  }
+  if(commit) c.win = a;
+  return a;
+}
+function buildHistory(c, commit){
+  const live = liveMsgs(c);
+  let out = live.slice(winStartOf(c, commit)).map(m=>({role:m.role, content:m.content}));
+  while(out.length && out[0].role!=="user") out.shift();
+  return out;
 }
 function effSystem(c){
   let s = S.system.trim();
@@ -770,10 +823,11 @@ function ctxCost(c){
 }
 function paintCtx(){
   const c = active();
-  const bar=$("#ctxBar"), mini=$("#ctxMini");
-  if(!c){ bar.classList.remove("on"); mini.textContent=""; return; }
+  const bar=$("#ctxBar"), mini=$("#bTokTxt");
+  if(!c){ bar.classList.remove("on"); mini.textContent="0"; return; }
   const {n,tok} = ctxCost(c);
-  mini.textContent = n ? "上下文 "+n+" 条 · 约 "+fmtN(tok)+" tok" : "";
+  const typing = estTokens($("#input") ? $("#input").value : "");
+  mini.textContent = fmtN(tok + typing);
   const over = n >= S.sumAt;
   bar.classList.toggle("on", over && !c.ctxHushed && !streaming);
   bar.classList.toggle("hot", n >= S.sumAt*1.6);
@@ -835,7 +889,7 @@ function switchBranch(c, fi, n){
     delete c.summary; c.archived = 0;
   }
   snapshotBranch(c, fi);
-  f.bi = n;
+  f.bi = n; c.win = 0;
   c.msgs.length = fi+1;
   f.alts[n].forEach(x=>c.msgs.push(x));
   save(true); renderMsgs();
@@ -971,7 +1025,7 @@ function sumCard(c){
     {textContent:"以上 "+c.archived+" 条已折叠为摘要 · 只有下面这段会被发出去"}));
   const un = document.createElement("button"); un.textContent="撤销";
   un.title = "把旧消息重新放回上下文";
-  un.onclick = ()=>{ delete c.summary; c.archived=0; save(true); renderMsgs(); toast("摘要已撤销，旧消息回到上下文"); };
+  un.onclick = ()=>{ delete c.summary; c.archived=0; c.win=0; save(true); renderMsgs(); toast("摘要已撤销，旧消息回到上下文"); };
   hd.appendChild(un);
   const b = document.createElement("div"); b.textContent = c.summary;
   w.append(hd,b);
@@ -1000,6 +1054,7 @@ async function compact(){
     if(!r.text.trim()) throw new Error("摘要是空的");
     c.summary  = r.text.trim();
     c.archived = c.msgs.indexOf(oldOnes[oldOnes.length-1]) + 1;
+    c.win = 0;
     c.ctxHushed = false;
     const u = S.provider==="anthropic"
       ? {in:r.raw?.usage?.input_tokens|0, out:r.raw?.usage?.output_tokens|0}
@@ -1072,7 +1127,8 @@ function msgEl(m, idx){
   b.ondblclick = ()=> startEdit(d, m, idx);
   if(m.usage){
     const u=document.createElement("div"); u.className="usage";
-    u.textContent = "↑"+m.usage.in+" ↓"+m.usage.out+" tokens";
+    u.textContent = "↑"+m.usage.in+(m.usage.hit ? "（缓存 "+m.usage.hit+"）" : "")+
+                    " ↓"+m.usage.out+" tokens";
     d.appendChild(u);
   }
   return d;
@@ -1081,18 +1137,59 @@ function msgEl(m, idx){
 const DS_STEPS = ["auto","off","low","high","max"];
 const DS_LABEL = {auto:"由模型定", off:"关", low:"低", high:"高", max:"最大"};
 function paintPill(){
-  const p = $("#pillThink"), anth = S.provider==="anthropic";
-  if(anth){
-    p.classList.toggle("on", S.thinkOn);
-    $("#pillTxt").textContent = S.thinkOn ? "思考 "+fmtN(S.thinkBudget) : "思考 关";
-    p.title = "点一下开关扩展思考（Anthropic）";
-  }else{
-    p.classList.toggle("on", S.dsThink!=="auto" && S.dsThink!=="off");
-    $("#pillTxt").textContent = "思考 "+DS_LABEL[S.dsThink];
-    p.title = "DeepSeek V4 默认就开着思考、力度 high，每条都在烧输出 token。\n"+
-      "点一下换档：由模型定 → 关 → 低 → 高 → 最大\n"+
-      "非 DeepSeek 的服务可能不认这个参数，认不出就留在「由模型定」。";
-  }
+  const b = $("#bThink"), anth = S.provider==="anthropic";
+  const lit = anth ? S.thinkOn : (S.dsThink!=="auto" && S.dsThink!=="off");
+  b.classList.toggle("lit", lit);
+  $("#bThinkTxt").textContent = effortLabel();
+  $("#bModelTxt").textContent = S.model || "未设模型";
+}
+
+/* ── little popup above the toolbar ── */
+function closePop(){ const e=$("#pop"); e.hidden=true; e.innerHTML=""; }
+function openPop(build, anchor){
+  const pop = $("#pop");
+  if(!pop.hidden && pop.dataset.from===anchor.id) return closePop();
+  pop.innerHTML=""; pop.hidden=false; pop.dataset.from=anchor.id;
+  build(pop);
+  const r = anchor.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+  let left = Math.min(r.left, innerWidth - pr.width - 10);
+  pop.style.left = Math.max(10, left)+"px";
+  pop.style.top  = Math.max(10, r.top - pr.height - 8)+"px";
+}
+function popEffort(pop){
+  const anth = S.provider==="anthropic";
+  const items = anth ? EFFORT_ANTH : EFFORT_DS;
+  const cur = anth ? (S.thinkOn ? String(S.thinkBudget) : "off") : S.dsThink;
+  const h=document.createElement("div"); h.className="ph"; h.textContent="思考档位"; pop.appendChild(h);
+  items.forEach(e=>{
+    const b=document.createElement("button"); b.className="pi"+(e.v===cur?" on":"");
+    b.innerHTML = '<span class="pd">'+(e.v==="off"?"○":e.v==="auto"?"·":"●")+'</span>'+
+                  '<span class="pk"></span><span class="pt">✓</span>';
+    b.querySelector(".pk").textContent = e.t;
+    b.onclick = ()=>{
+      if(anth){ if(e.v==="off") S.thinkOn=false; else { S.thinkOn=true; S.thinkBudget=parseInt(e.v); } }
+      else S.dsThink = e.v;
+      save(true); paintPill(); closePop(); toast("思考 · "+e.t);
+    };
+    pop.appendChild(b);
+  });
+}
+function popTokens(pop){
+  const c = active();
+  const sysTok = estTokens(effSystem(c));
+  const hist = c ? ctxCost(c).tok - sysTok : 0;
+  const typing = estTokens($("#input").value);
+  const row=(k,v,cls)=>{ const d=document.createElement("div"); d.className="prow"+(cls?" "+cls:"");
+    d.innerHTML='<span></span><span></span>';
+    d.children[0].textContent=k; d.children[1].textContent=v; return d; };
+  const h=document.createElement("div"); h.className="ph"; h.textContent="Token 估算"; pop.appendChild(h);
+  pop.appendChild(row("正在打的", fmtN(typing)));
+  pop.appendChild(row("上下文", fmtN(hist)));
+  pop.appendChild(row("系统提示词", fmtN(sysTok)));
+  pop.appendChild(row("合计", fmtN(sysTok+hist+typing), "tot"));
+  const n=document.createElement("div"); n.className="pnote";
+  n.textContent = c ? ("带 "+ctxCost(c).n+" 条消息 · 上限 "+S.ctxLimit+" 条") : "";
+  pop.appendChild(n);
 }
 
 function renderAll(){
@@ -1367,7 +1464,10 @@ async function streamAPI(msgs, onDelta, onThink, signal, extra){
           const rt = d.reasoning_content ?? d.reasoning;
           if(rt) onThink(rt);
           if(d.content) onDelta(d.content);
-          if(j.usage){ usage.in=j.usage.prompt_tokens||0; usage.out=j.usage.completion_tokens||0; }
+          if(j.usage){
+            usage.in=j.usage.prompt_tokens||0; usage.out=j.usage.completion_tokens||0;
+            if(j.usage.prompt_cache_hit_tokens!=null) usage.hit=j.usage.prompt_cache_hit_tokens|0;
+          }
         }
       }
     }
@@ -1383,7 +1483,7 @@ async function run(){
   streaming = true; setSendState(true); paintCtx();
   // NOTE: thinking is deliberately NOT replayed into history — DeepSeek rejects it
   // and it would re-bill every turn. buildHistory only ever sends role+content.
-  const hist = buildHistory(c);
+  const hist = buildHistory(c, true);
 
   const holder = { role:"assistant", content:"" };
   c.msgs.push(holder);
@@ -1515,7 +1615,9 @@ function renderStats(){
       '你在别处用的量它看不见。</div>';
     return;
   }
-  const tot = st.reduce((a,s)=>({i:a.i+s.i, o:a.o+s.o}), {i:0,o:0});
+  const tot = st.reduce((a,s)=>({i:a.i+s.i, o:a.o+s.o, h:a.h+(s.h|0)}), {i:0,o:0,h:0});
+  const cached = st.some(s=>s.h);
+  const hitPct = tot.i ? (tot.h/tot.i*100) : 0;
 
   // per model
   const byM = {};
@@ -1541,6 +1643,8 @@ function renderStats(){
       '<div class="stat-card"><div class="k">请求</div><div class="v">'+st.length+'</div></div>'+
       '<div class="stat-card"><div class="k">输入</div><div class="v">'+fmtN(tot.i)+'<small>tok</small></div></div>'+
       '<div class="stat-card"><div class="k">输出</div><div class="v">'+fmtN(tot.o)+'<small>tok</small></div></div>'+
+      (cached?'<div class="stat-card"><div class="k">缓存命中</div><div class="v">'+
+        hitPct.toFixed(0)+'<small>%</small></div></div>':'')+
       (priced?'<div class="stat-card"><div class="k">估算花费</div><div class="v">'+money(cost)+'</div></div>':'')+
     '</div>'+
     '<div class="sect">近 14 天（按 token 总量）</div>'+
@@ -1557,6 +1661,10 @@ function renderStats(){
         '<td class="n"><input data-price="in"  data-m="'+esc(m)+'" type="number" step="0.01" min="0" value="'+(p.in??"")+'"></td>'+
         '<td class="n"><input data-price="out" data-m="'+esc(m)+'" type="number" step="0.01" min="0" value="'+(p.out??"")+'"></td></tr>';
     }).join('')+'</tbody></table>'+
+    (cached?'<div class="muted" style="margin-top:12px">'+
+      '<b>缓存命中</b>：输入里有 '+fmtN(tot.h)+' tok 命中了前缀缓存（便宜很多）。'+
+      '命中靠的是"每次请求的开头一模一样"——所以别在对话中间改旧消息、别频繁切模型，'+
+      '那都会把缓存打断。</div>':'')+
     '<div class="muted" style="margin-top:12px">单价要你自己填 —— 我不硬编价格，'+
     '因为价格会变，写死的数字只会在某天悄悄骗你。填一次就存着了。<br>'+
     '另外：思考的 token 算在「输出」里，接口不单独拆出来，所以开了思考输出会明显变粗。</div>';
@@ -1571,8 +1679,8 @@ function renderStats(){
 }
 
 function statsCsv(){
-  const rows = [["时间","模型","通道","输入tok","输出tok"]].concat(
-    S.stats.map(s=>[new Date(s.t).toISOString(), s.m, s.p, s.i, s.o]));
+  const rows = [["时间","模型","通道","输入tok","其中缓存命中","输出tok"]].concat(
+    S.stats.map(s=>[new Date(s.t).toISOString(), s.m, s.p, s.i, s.h|0, s.o]));
   const csv = "﻿"+rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(",")).join("\n");
   const a=document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
@@ -1597,10 +1705,7 @@ function autoSize(){
   const el=$("#input"); el.style.height="auto";
   el.style.height=Math.min(el.scrollHeight,200)+"px";
 }
-function updCnt(){
-  const n=$("#input").value.length;
-  $("#cnt").textContent = n ? n+" 字" : "";
-}
+function updCnt(){}
 function applyTheme(){
   const r=document.documentElement;
   if(S.theme==="auto") r.removeAttribute("data-theme");
@@ -1658,19 +1763,13 @@ $("#rowEffort").onclick = ()=>{ paintEffort(); shGo("effort","思考档位"); };
 $("#btnSave").onclick = ()=>{ syncFromForm(); save(true); renderAll(); closeSheet(); toast("已保存"); };
 $("#btnTest").onclick = testConn;
 $("#btnModels").onclick = fetchModels;
-$("#pillThink").onclick = ()=>{
-  if(S.provider==="anthropic"){
-    S.thinkOn = !S.thinkOn; save(true); paintPill();
-    return toast(S.thinkOn ? "思考开了，预算 "+S.thinkBudget+" tok（算在输出里）" : "思考关了");
-  }
-  S.dsThink = DS_STEPS[(DS_STEPS.indexOf(S.dsThink)+1) % DS_STEPS.length];
-  save(true); paintPill();
-  toast({auto:"不发思考参数，随服务端默认（DeepSeek 默认＝开·high）",
-         off:"思考关了，最省",
-         low:"思考 低 —— 铺场景、写对话够用",
-         high:"思考 高 —— DeepSeek 的默认档",
-         max:"思考 最大 —— 贵，留给真要动脑子的"}[S.dsThink]);
-};
+$("#bThink").onclick = e=>{ e.stopPropagation(); openPop(popEffort, $("#bThink")); };
+$("#bTok").onclick   = e=>{ e.stopPropagation(); openPop(popTokens, $("#bTok")); };
+$("#bSet").onclick   = openSet;
+$("#bModel").onclick = ()=>{ openSet(); setTimeout(()=>{ paintModels(); shGo("model","选择模型"); }, 30); };
+document.addEventListener("pointerdown", e=>{
+  if(!$("#pop").hidden && !e.target.closest("#pop") && !e.target.closest(".bic")) closePop();
+}, true);
 $("#btnSum").onclick = compact;
 $("#ctxHide").onclick = ()=>{ const c=active(); if(c){ c.ctxHushed=true; save(true); paintCtx(); } };
 $("#btnStats").onclick = ()=>{ renderStats(); $("#statMask").classList.add("on"); };
@@ -1689,10 +1788,14 @@ $("#btnTheme").onclick = ()=>{
   applyTheme(); save(true); toast("主题："+({auto:"跟随系统",light:"浅色",dark:"深色"})[S.theme]);
 };
 $("#send").onclick = submit;
+// A phone keyboard has no Shift, so "Shift+Enter for a newline" means no newline at
+// all. On touch, Enter always inserts one and the arrow button sends.
+const ENTER_SENDS = matchMedia("(hover: hover)").matches;
 $("#input").addEventListener("keydown", e=>{
+  if(!ENTER_SENDS) return;
   if(e.key==="Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); submit(); }
 });
-$("#input").addEventListener("input", ()=>{ autoSize(); updCnt(); });
+$("#input").addEventListener("input", ()=>{ autoSize(); updCnt(); paintCtx(); });
 $("#title").addEventListener("blur", ()=>{
   const c=active(); if(!c) return;
   c.title = $("#title").textContent.trim().slice(0,40) || "未命名";
@@ -1705,6 +1808,7 @@ document.addEventListener("click", e=>{
 });
 document.addEventListener("keydown", e=>{
   if(e.key==="Escape"){
+    closePop();
     if($("#sheet").classList.contains("on")) shStack.length>1 ? shBack() : closeSheet();
     $("#statMask").classList.remove("on");
   }
@@ -1733,6 +1837,9 @@ addEventListener("beforeunload", e=>{ if(streaming){ e.preventDefault(); e.retur
 })();
 
 /* boot */
+$("#emptyKeys").innerHTML = ENTER_SENDS
+  ? '<kbd>Enter</kbd> 发送 · <kbd>Shift+Enter</kbd> 换行'
+  : '回车换行 · 点右边箭头发送';
 const narrow = ()=> innerWidth<=720;
 if(narrow()) $("#side").classList.add("hidden");   // otherwise it covers the chat
 // on a phone, tapping the chat area closes the drawer
