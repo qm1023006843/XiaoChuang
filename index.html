@@ -407,6 +407,8 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 .field .note{font-size:11.5px;color:var(--fg-3);margin-top:5px;line-height:1.55}
 .row{display:flex;gap:10px}
 .row>*{flex:1;min-width:0}
+/* …but the sheet's grouped rows keep their trailing bits content-sized */
+.row>.chev,.row>.tick,.row>.rv,.row>.mini{flex:0 0 auto}
 .seg{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:10px;
   border:1px solid var(--line-2)}
 .seg button{flex:1;padding:7px;border-radius:7px;font-size:13px;color:var(--fg-2);text-align:center}
@@ -546,7 +548,7 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
           <div class="sh-label">模型与思考</div>
           <div class="grp">
             <button class="row" id="rowModel">
-              <div class="rw"><div class="rt">模型</div></div>
+              <div class="rw"><div class="rt">模型</div><div class="rs" id="rowModelSub"></div></div>
               <span class="rv" id="rowModelVal"></span><span class="chev">›</span>
             </button>
             <button class="row" id="rowEffort">
@@ -643,7 +645,7 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
         <div class="sh-label">模型与思考</div>
         <div class="grp">
           <button class="row" id="dRowModel">
-            <div class="rw"><div class="rt">模型</div></div>
+            <div class="rw"><div class="rt">模型</div><div class="rs" id="dRowModelSub"></div></div>
             <span class="rv" id="dRowModelVal"></span><span class="chev">›</span>
           </button>
           <button class="row" id="dRowEffort">
@@ -701,11 +703,17 @@ function rawGet(){
   try{ return localStorage.getItem(KEY); }
   catch(e){ storageOK = false; return memFallback; }
 }
+let quotaHit = false;             // storage is full: keep trying, a later save may fit again
 function rawSet(v){
   if(storageOK){
-    try{ localStorage.setItem(KEY, v); return true; }
+    try{ localStorage.setItem(KEY, v); quotaHit = false; return true; }
     catch(e){
-      storageOK = false; memFallback = v;
+      memFallback = v;
+      if(e && (e.name==="QuotaExceededError" || e.code===22 || e.code===1014)){
+        if(!quotaHit) toast("浏览器存储写满了，最近的改动没存上——请立刻「导出备份」，再删掉些旧对话");
+        quotaHit = true; return false;
+      }
+      storageOK = false;
       toast("浏览器存储写不进去了（可能满了或被禁用）——请立刻「导出备份」");
       return false;
     }
@@ -772,7 +780,7 @@ function fromV1(p){
   const cfg = v1Cfg(p, ch.id);
   p.channels = [ch];
   p.winDef = cfg;
-  (Array.isArray(p.convs) ? p.convs : []).forEach(c=>{ if(c && !c.cfg) c.cfg = normCfg(cfg); });
+  (Array.isArray(p.convs) ? p.convs : []).forEach(c=>{ if(c && typeof c==="object" && !c.cfg) c.cfg = normCfg(cfg); });
   V1_KEYS.forEach(k=>delete p[k]);
   p.ver = 2;
 }
@@ -871,6 +879,7 @@ function paintStore(){
   el.style.width = pct.toFixed(1)+"%";
   bar.classList.toggle("warn", pct>75);
   const kb = bytes<1024 ? bytes+" B" : (bytes/1024).toFixed(0)+" KB";
+  if(quotaHit){ bar.classList.add("warn"); tx.textContent = "⚠ 存满了，最近的改动没存上 · "+kb; return; }
   tx.textContent = "存储 "+kb+(pct>75 ? " · 该导出备份了" : "");
 }
 
@@ -1035,6 +1044,7 @@ const $ = s => document.querySelector(s);
 
 function active(){ return S.convs.find(c=>c.id===S.activeId) || null; }
 function newConv(){
+  closePop();
   const c = { id:uid(), title:"新的对话", msgs:[], ts:Date.now(), cfg:normCfg(S.winDef) };
   S.convs.unshift(c); S.activeId = c.id; save(); renderAll(); $("#input").focus();
 }
@@ -1513,9 +1523,11 @@ function chSub(ch){
   return parts.join(" · ");
 }
 function chUsers(id){ return S.convs.filter(c=>cfgOf(c).ch===id).length; }
-function pickLabel(cfg){
+// the 模型 row: model on the right (it's what gets cut on a phone otherwise), channel underneath
+function paintModelRow(val, sub, cfg){
   const ch = chOf(cfg);
-  return ch ? ch.name+" · "+(cfg.model || "未选模型") : "未设";
+  $(val).textContent = ch ? (cfg.model || "未选模型") : "未设";
+  $(sub).textContent = ch ? "通道 · "+ch.name : "还没选通道";
 }
 
 /* ══ settings sheet ══
@@ -1548,13 +1560,13 @@ function paintMain(){
   if(c){
     const cfg = cfgOf(c);
     $("#winNote").textContent = "这一页只管当前窗口「"+(c.title||"未命名")+"」，别的窗口各有各的。";
-    $("#rowModelVal").textContent  = pickLabel(cfg);
+    paintModelRow("#rowModelVal", "#rowModelSub", cfg);
     $("#rowEffortVal").textContent = effortLabel(cfg);
   }
   $("#rowChansVal").textContent = S.channels.length ? S.channels.length+" 条" : "还没有";
 }
 function paintDefs(){
-  $("#dRowModelVal").textContent  = pickLabel(S.winDef);
+  paintModelRow("#dRowModelVal", "#dRowModelSub", S.winDef);
   $("#dRowEffortVal").textContent = effortLabel(S.winDef);
 }
 
@@ -1607,6 +1619,10 @@ function paintModels(){
 function pickModel(ch, id){
   const cfg = tgtCfg();
   cfg.ch = ch.id; cfg.model = id;
+  // a default with no model is no use to the next window — seed it from this pick
+  if(cfg!==S.winDef && !S.winDef.model && (!chOf(S.winDef) || S.winDef.ch===ch.id)){
+    S.winDef.ch = ch.id; S.winDef.model = id;
+  }
   save(true); paintModels(); refreshWin();
 }
 const stOut  = el => (ok,msg)=>{ el.className = "st"+(ok===true?" ok":ok===false?" bad":""); el.textContent = msg; };
@@ -1696,10 +1712,14 @@ function adopt(ch){
   openChs.add(ch.id);
 }
 function delChannel(ch){
-  const n = chUsers(ch.id);
-  if(!confirm(n
-      ? "有 "+n+" 个窗口在用「"+ch.name+"」。删掉后它们改用默认设定里的通道，模型要重新选。\n\n删除？"
-      : "删掉通道「"+ch.name+"」？")) return false;
+  const n = chUsers(ch.id), defHit = S.winDef.ch===ch.id;
+  // its windows follow the default; if the default used it too, the default moves on first
+  const dest = defHit ? S.channels.find(x=>x!==ch) : chOf(S.winDef);
+  const to = dest ? "「"+dest.name+"」" : "「没有通道」（得先新增一条）";
+  let msg = "删掉通道「"+ch.name+"」？";
+  if(n) msg += "\n\n有 "+n+" 个窗口在用它，删掉后它们改用默认设定里的通道"+to+"，模型要重新选。";
+  if(defHit) msg += "\n\n新窗口默认设定也在用它，会改成"+to+"，默认模型清空。";
+  if(!confirm(msg)) return false;
   S.channels = S.channels.filter(x=>x!==ch);
   openChs.delete(ch.id);
   if(S.winDef.ch===ch.id){ S.winDef.ch = S.channels[0]?.id || null; S.winDef.model = ""; }
@@ -1747,9 +1767,11 @@ function corsHint(e){
   return m;
 }
 
+let testSeq = 0;
 async function testConn(){
   if(!shConv) return;
-  const out = boxOut($("#testOut"));
+  const tok = ++testSeq, show = boxOut($("#testOut"));
+  const out = (ok,m)=>{ if(tok===testSeq) show(ok,m); };
   // test what's on screen right now, without saving it
   const cfg = readForm(FORMS.win, Object.assign({}, cfgOf(shConv)));
   const ctx = rt(cfg);
@@ -1984,11 +2006,17 @@ function doImport(file){
       // address) keeps its key; anything else is added and needs its key filled in.
       const map = {};                              // backup channel id → channel id here
       let def, born = 0;
+      // look-alikes only match channels that were here before this import, each one once
+      const before = S.channels.slice(), claimed = new Set();
       const merge = (b, byName)=>{
         const hit = S.channels.find(m=>m.id===b.id) ||
-                    S.channels.find(m=>(!byName || m.name===b.name) && sameEndpoint(m,b));
-        if(hit){ if(!hit.models.length && b.models.length) hit.models = b.models; return hit.id; }
-        b.key = ""; S.channels.push(b); born++; return b.id;
+                    before.find(m=>!claimed.has(m.id) && (!byName || m.name===b.name) && sameEndpoint(m,b));
+        if(hit){
+          claimed.add(hit.id);
+          if(!hit.models.length && b.models.length) hit.models = b.models;
+          return hit.id;
+        }
+        b.key = ""; S.channels.push(b); claimed.add(b.id); born++; return b.id;
       };
       if(Array.isArray(j.channels)){
         j.channels.forEach(x=>{ if(x && typeof x==="object"){ const b = normCh(x); map[b.id] = merge(b, true); } });
@@ -2154,7 +2182,7 @@ function shBack(){
   SH_PAINT[shStack[shStack.length-1].sc](); shShow();
 }
 function openSet(){
-  shConv = active(); shTgt = "win"; editCh = null;
+  shConv = active(); shTgt = "win"; editCh = null; testSeq++;
   if(shConv) fillForm(FORMS.win, cfgOf(shConv));
   fillForm(FORMS.def, S.winDef);
   $("#testOut").className = "out";
@@ -2195,8 +2223,11 @@ $("#btnMdlAdd").onclick  = ()=>openChEdit(null);
 $("#btnChModels").onclick = async ()=>{
   const out = boxOut($("#chOut"));
   if(!$("#cKey").value.trim()) return out(false,"先填 API Key");
-  const ch = syncCh();
-  if(ch) await fetchModels(ch, out);
+  const ch = syncCh(); if(!ch) return;
+  $("#btnChDel").hidden = false;
+  shStack[shStack.length-1].title = $("#shTitle").textContent = "编辑通道";
+  // a late answer must not land in the editor of a different channel
+  await fetchModels(ch, (ok,m)=>{ if(editCh===ch) out(ok,m); });
 };
 $("#btnChDel").onclick = ()=>{
   const ch = editCh;
@@ -2213,7 +2244,6 @@ $("#btnToDef").onclick = ()=>{
 $("#btnFromDef").onclick = ()=>{
   if(!shConv) return;
   if(!confirm("把这个窗口的模型、思考档位、人设和进阶设定都改回默认？")) return;
-  readForm(FORMS.def, S.winDef);
   shConv.cfg = normCfg(S.winDef);
   fillForm(FORMS.win, shConv.cfg);
   save(true); paintMain(); refreshWin(); toast("已恢复默认");
@@ -2225,10 +2255,10 @@ $("#btnSave").onclick = ()=>{
   save(true); renderAll(); closeSheet(); toast("已保存");
 };
 $("#btnTest").onclick = testConn;
-$("#bThink").onclick = e=>{ e.stopPropagation(); openPop(popEffort, $("#bThink")); };
+$("#bThink").onclick = e=>{ e.stopPropagation(); if(!active()) newConv(); openPop(popEffort, $("#bThink")); };
 $("#bTok").onclick   = e=>{ e.stopPropagation(); openPop(popTokens, $("#bTok")); };
 $("#bSet").onclick   = openSet;
-$("#bModel").onclick = openPicker;
+$("#bModel").onclick = ()=>{ if(!active()) newConv(); openPicker(); };
 document.addEventListener("pointerdown", e=>{
   if(!$("#pop").hidden && !e.target.closest("#pop") && !e.target.closest(".bic")) closePop();
 }, true);
