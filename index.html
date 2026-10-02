@@ -69,7 +69,10 @@ input,textarea,select{font:inherit;color:inherit}
   display:flex;align-items:center;gap:6px;color:var(--fg-2);font-size:13.5px}
 .conv:hover{background:var(--bg-3)}
 .conv.active{background:var(--bg-3);color:var(--fg);font-weight:500}
-.conv .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv .tw{flex:1;min-width:0;display:flex;flex-direction:column}
+.conv .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv .m{font-size:10.5px;color:var(--fg-3);font-family:var(--mono);font-weight:400;line-height:1.45;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .conv .x{opacity:0;color:var(--fg-3);font-size:15px;line-height:1;padding:2px 4px;border-radius:5px;flex:0 0 auto}
 .conv:hover .x{opacity:1}
 .conv .x:hover{color:var(--danger);background:var(--bg)}
@@ -208,6 +211,26 @@ button.row:active{background:var(--bg-3)}
 .sh-btn.thin{width:auto;padding:11px 16px;margin:0;flex:0 0 auto}
 .sh-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500;margin:0}
 .sh-btn.primary:hover{opacity:.92;background:var(--accent);color:#fff}
+.sh-btn.danger{color:var(--danger);border-color:var(--danger)}
+.sh-btn.danger:hover{background:var(--danger);color:#fff}
+.sh-row2 .sh-btn.thin{flex:1}
+.sh-note.lead{margin:12px 4px 0}
+
+/* model picker: every channel is a fold (总), its models are the rows inside (分) */
+.mgrp+.mgrp{margin-top:10px}
+.mgrp .chev{transition:transform .18s}
+.mgrp.open>.row:first-child .chev{transform:rotate(90deg)}
+.mgrp.open>.row:first-child{background:var(--bg-3)}
+.mgrp .row.mi{padding-left:26px}
+.mgrp .row.mi .rt{font-size:14px;font-weight:400}
+.mgrp .row.mi.sel .rt{font-weight:500}
+.mgrp .row.rowinput{padding-left:26px}
+.mgrp .row.rowinput input{font-size:14px}
+.mgrp .gact{padding:9px 14px 9px 26px;gap:7px}
+.gact .st{flex:1;min-width:0;font-size:12px;color:var(--fg-3);white-space:pre-wrap;line-height:1.55}
+.gact .st.ok{color:var(--ok)}
+.gact .st.bad{color:var(--danger)}
+.gact .mini{flex:0 0 auto}
 .sh-foot{flex:0 0 auto;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));
   border-top:1px solid var(--line);background:var(--bg)}
 @media (hover:none){ .rt{font-size:15.5px} .rs{font-size:12.5px}
@@ -384,6 +407,8 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 .field .note{font-size:11.5px;color:var(--fg-3);margin-top:5px;line-height:1.55}
 .row{display:flex;gap:10px}
 .row>*{flex:1;min-width:0}
+/* …but the sheet's grouped rows keep their trailing bits content-sized */
+.row>.chev,.row>.tick,.row>.rv,.row>.mini{flex:0 0 auto}
 .seg{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:10px;
   border:1px solid var(--line-2)}
 .seg button{flex:1;padding:7px;border-radius:7px;font-size:13px;color:var(--fg-2);text-align:center}
@@ -400,11 +425,11 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 .btn:hover{background:var(--bg-2);color:var(--fg)}
 .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500;flex:1}
 .btn.primary:hover{opacity:.9;background:var(--accent);color:#fff}
-#testOut{font-size:12.5px;font-family:var(--mono);margin-top:9px;padding:9px 11px;
+.out{font-size:12.5px;font-family:var(--mono);margin-top:9px;padding:9px 11px;
   border-radius:8px;background:var(--bg-2);display:none;white-space:pre-wrap;line-height:1.6}
-#testOut.on{display:block}
-#testOut.ok{color:var(--ok)}
-#testOut.bad{color:var(--danger)}
+.out.on{display:block}
+.out.ok{color:var(--ok)}
+.out.bad{color:var(--danger)}
 
 /* empty state */
 #empty{position:absolute;inset:var(--topH) 0 0;display:flex;flex-direction:column;align-items:center;
@@ -517,66 +542,130 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 
     <div class="sh-body">
       <section class="sh-screen" data-sc="main">
-        <div class="sh-label">通道</div>
-        <div class="grp" id="grpProv"></div>
-        <div class="sh-note" id="provNote"></div>
+        <div id="winPart">
+          <div class="sh-note lead" id="winNote"></div>
 
-        <div id="wrapBase">
+          <div class="sh-label">模型与思考</div>
+          <div class="grp">
+            <button class="row" id="rowModel">
+              <div class="rw"><div class="rt">模型</div><div class="rs" id="rowModelSub"></div></div>
+              <span class="rv" id="rowModelVal"></span><span class="chev">›</span>
+            </button>
+            <button class="row" id="rowEffort">
+              <div class="rw"><div class="rt">思考档位</div></div>
+              <span class="rv" id="rowEffortVal"></span><span class="chev">›</span>
+            </button>
+          </div>
+
+          <div class="sh-label">系统提示词（这个窗口的人设／规矩）</div>
+          <div class="grp"><div class="row rowinput">
+            <textarea id="iSys" placeholder="留空就是干净的默认状态。"></textarea>
+          </div></div>
+
+          <div class="sh-label">进阶</div>
+          <div class="grp">
+            <div class="row rowinput"><label for="iMax">最大回复长度</label>
+              <input id="iMax" type="number" min="256" max="64000" step="256"></div>
+            <div class="row rowinput"><label for="iCtx">携带上下文条数</label>
+              <input id="iCtx" type="number" min="2" max="200" step="2"></div>
+          </div>
+          <div class="sh-note">上下文条数越大越贵。</div>
+
+          <div class="sh-row2">
+            <button class="sh-btn thin" id="btnToDef" title="把这个窗口现在的设定存成新窗口的默认">存为默认</button>
+            <button class="sh-btn thin" id="btnFromDef" title="把这个窗口改回默认设定">恢复默认</button>
+          </div>
+
+          <button class="sh-btn" id="btnTest">连接自检</button>
+          <div class="out" id="testOut"></div>
+        </div>
+
+        <div class="sh-label">全局（所有窗口共用）</div>
+        <div class="grp">
+          <button class="row" id="rowChans">
+            <div class="rw"><div class="rt">通道</div><div class="rs">接口地址和 API Key 都存在这里</div></div>
+            <span class="rv" id="rowChansVal"></span><span class="chev">›</span>
+          </button>
+          <button class="row" id="rowDefs">
+            <div class="rw"><div class="rt">新窗口默认设定</div><div class="rs">新开的窗口照这份来</div></div>
+            <span class="chev">›</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="sh-screen" data-sc="model" hidden>
+        <div id="mdlList"></div>
+        <button class="sh-btn" id="btnMdlAdd">＋ 新增通道</button>
+        <div class="sh-note">点通道名展开它的模型，再点一下收起。不写死型号，点「拉列表」直接问接口要，永远不会过期。</div>
+      </section>
+
+      <section class="sh-screen" data-sc="effort" hidden>
+        <div class="grp" id="grpEffort"></div>
+        <div class="sh-note" id="noteEffort"></div>
+      </section>
+
+      <section class="sh-screen" data-sc="chans" hidden>
+        <div class="grp" id="grpChans"></div>
+        <button class="sh-btn" id="btnChAdd">＋ 新增通道</button>
+        <div class="sh-note">一条通道 = 一家服务 + 一把 Key。同一家想用两把 Key，就存两条。每个窗口都能从这里随便挑。</div>
+      </section>
+
+      <section class="sh-screen" data-sc="chedit" hidden>
+        <div class="sh-label">名字</div>
+        <div class="grp"><div class="row rowinput">
+          <input id="cName" placeholder="比如 DeepSeek、Claude、硅基流动（留空自动起）" spellcheck="false" autocapitalize="off">
+        </div></div>
+
+        <div class="sh-label">类型</div>
+        <div class="grp" id="grpKind"></div>
+        <div class="sh-note" id="kindNote"></div>
+
+        <div id="cWrapBase">
           <div class="sh-label">接口地址</div>
           <div class="grp"><div class="row rowinput">
-            <input id="iBase" placeholder="https://api.deepseek.com/v1" spellcheck="false" autocapitalize="off">
+            <input id="cBase" placeholder="https://api.deepseek.com/v1" spellcheck="false" autocapitalize="off">
           </div></div>
           <div class="sh-note">填到 <code>/v1</code> 为止。DeepSeek 是 <code>https://api.deepseek.com/v1</code>。</div>
         </div>
 
         <div class="sh-label">API Key</div>
         <div class="grp"><div class="row rowinput">
-          <input id="iKey" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false">
+          <input id="cKey" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false">
         </div></div>
-        <div class="sh-note">只存在这台机器的浏览器里，不上传任何地方。机器别乱借。</div>
+        <div class="sh-note">只存在这台机器的浏览器里，不上传任何地方。导出备份也不带它。机器别乱借。</div>
+
+        <button class="sh-btn" id="btnChModels">拉模型列表（顺便测通不通）</button>
+        <div class="out" id="chOut"></div>
+        <button class="sh-btn danger" id="btnChDel">删除这条通道</button>
+      </section>
+
+      <section class="sh-screen" data-sc="defs" hidden>
+        <div class="sh-note lead">新开的窗口照这份来。改这里不影响已经开着的窗口。</div>
 
         <div class="sh-label">模型与思考</div>
         <div class="grp">
-          <button class="row" id="rowModel">
-            <div class="rw"><div class="rt">模型</div></div>
-            <span class="rv" id="rowModelVal"></span><span class="chev">›</span>
+          <button class="row" id="dRowModel">
+            <div class="rw"><div class="rt">模型</div><div class="rs" id="dRowModelSub"></div></div>
+            <span class="rv" id="dRowModelVal"></span><span class="chev">›</span>
           </button>
-          <button class="row" id="rowEffort">
+          <button class="row" id="dRowEffort">
             <div class="rw"><div class="rt">思考档位</div></div>
-            <span class="rv" id="rowEffortVal"></span><span class="chev">›</span>
+            <span class="rv" id="dRowEffortVal"></span><span class="chev">›</span>
           </button>
         </div>
 
-        <div class="sh-label">系统提示词（这个窗口的人设／规矩）</div>
+        <div class="sh-label">系统提示词</div>
         <div class="grp"><div class="row rowinput">
-          <textarea id="iSys" placeholder="留空就是干净的默认状态。"></textarea>
+          <textarea id="dSys" placeholder="留空就是干净的默认状态。"></textarea>
         </div></div>
 
         <div class="sh-label">进阶</div>
         <div class="grp">
-          <div class="row rowinput"><label for="iMax">最大回复长度</label>
-            <input id="iMax" type="number" min="256" max="64000" step="256"></div>
-          <div class="row rowinput"><label for="iCtx">携带上下文条数</label>
-            <input id="iCtx" type="number" min="2" max="200" step="2"></div>
+          <div class="row rowinput"><label for="dMax">最大回复长度</label>
+            <input id="dMax" type="number" min="256" max="64000" step="256"></div>
+          <div class="row rowinput"><label for="dCtx">携带上下文条数</label>
+            <input id="dCtx" type="number" min="2" max="200" step="2"></div>
         </div>
-        <div class="sh-note">上下文条数越大越贵。</div>
-
-        <button class="sh-btn" id="btnTest">连接自检</button>
-        <div id="testOut"></div>
-      </section>
-
-      <section class="sh-screen" data-sc="model" hidden>
-        <div class="grp" id="grpModels"></div>
-        <div class="sh-row2">
-          <input id="iModel" placeholder="或者直接打型号 ID" spellcheck="false" autocapitalize="off">
-          <button class="sh-btn thin" id="btnModels">拉列表</button>
-        </div>
-        <div class="sh-note">不写死型号，点「拉列表」直接问接口要，永远不会过期。</div>
-      </section>
-
-      <section class="sh-screen" data-sc="effort" hidden>
-        <div class="grp" id="grpEffort"></div>
-        <div class="sh-note" id="noteEffort"></div>
       </section>
     </div>
 
@@ -614,11 +703,17 @@ function rawGet(){
   try{ return localStorage.getItem(KEY); }
   catch(e){ storageOK = false; return memFallback; }
 }
+let quotaHit = false;             // storage is full: keep trying, a later save may fit again
 function rawSet(v){
   if(storageOK){
-    try{ localStorage.setItem(KEY, v); return true; }
+    try{ localStorage.setItem(KEY, v); quotaHit = false; return true; }
     catch(e){
-      storageOK = false; memFallback = v;
+      memFallback = v;
+      if(e && (e.name==="QuotaExceededError" || e.code===22 || e.code===1014)){
+        if(!quotaHit) toast("浏览器存储写满了，最近的改动没存上——请立刻「导出备份」，再删掉些旧对话");
+        quotaHit = true; return false;
+      }
+      storageOK = false;
       toast("浏览器存储写不进去了（可能满了或被禁用）——请立刻「导出备份」");
       return false;
     }
@@ -626,38 +721,143 @@ function rawSet(v){
   memFallback = v; return false;
 }
 
-const DEFAULTS = {
-  provider:"anthropic",
-  baseURL:"https://api.deepseek.com/v1",
-  key:"",
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+/* ── settings live in two places ──
+   channels: global list — where to send and with which key (each one its own key)
+   cfg:      per window (conv.cfg) — which channel+model, thinking, persona, limits.
+   A brand-new window starts from a copy of S.winDef. */
+const BASE_CFG = {
+  ch:null,           // channel id
   model:"",
   system:"",
   maxTokens:4096,
   ctxLimit:40,
-  thinkOn:false,
+  thinkOn:false,     // Anthropic 通道的思考开关 + 预算
   thinkBudget:4000,
-  dsThink:"auto",
-  models:[],         // 「拉列表」取回来的型号，存着免得每次重拉    // OpenAI 兼容通道的思考档位: auto(不发送)/off/low/high/max
+  dsThink:"auto"     // OpenAI 兼容通道的思考档位: auto(不发送)/off/low/high/max
+};
+const DS_THINK = ["auto","off","low","high","max"];
+const DEFAULTS = {
+  ver:2,
+  channels:[],       // {id, name, kind:"anthropic"|"openai", baseURL, key, models:[]}
+  winDef:structuredClone(BASE_CFG),
   theme:"auto",
   sumAt:24,          // suggest compacting once the live context passes this many messages
-  stats:[],          // {t, m:model, p:provider, i:inTokens, o:outTokens}
+  stats:[],          // {t, m:model, p:channel name, i:inTokens, o:outTokens}
   prices:{},         // model -> {in, out}  per 1M tokens, filled in by hand
   convs:[],
   activeId:null
 };
-let S = load();
-
 function load(){
+  let p;
   try{
     const raw = rawGet();
     if(!raw) return structuredClone(DEFAULTS);
-    const p = JSON.parse(raw);
-    return Object.assign(structuredClone(DEFAULTS), p);
+    p = JSON.parse(raw);
   }catch(e){
     console.warn("存档解析失败，起用空档", e);
     return structuredClone(DEFAULTS);
   }
+  try{
+    if(!Array.isArray(p.channels)){ fromV1(p); upgraded = true; }
+    return tidy(Object.assign(structuredClone(DEFAULTS), p));
+  }catch(e){
+    // Never let a failed upgrade overwrite the old archive: stop writing to storage
+    // for this session, so the original stays exactly as it was.
+    console.error("存档升级失败", e);
+    upgradeFailed = true; memFallback = JSON.stringify(DEFAULTS); storageOK = false;
+    return structuredClone(DEFAULTS);
+  }
 }
+
+/* v1 kept ONE global set of settings. It becomes the first channel, and every
+   existing window (and the new-window default) keeps exactly what it had. */
+const V1_KEYS = ["provider","baseURL","key","model","models","system","maxTokens","ctxLimit",
+                 "thinkOn","thinkBudget","dsThink"];
+function fromV1(p){
+  const ch = v1Channel(p, true);
+  const cfg = v1Cfg(p, ch.id);
+  p.channels = [ch];
+  p.winDef = cfg;
+  (Array.isArray(p.convs) ? p.convs : []).forEach(c=>{ if(c && typeof c==="object" && !c.cfg) c.cfg = normCfg(cfg); });
+  V1_KEYS.forEach(k=>delete p[k]);
+  p.ver = 2;
+}
+function v1Channel(o, keepKey){
+  const kind = o.provider==="openai" ? "openai" : "anthropic";
+  const baseURL = typeof o.baseURL==="string" ? o.baseURL.trim() : "";
+  return normCh({ id:uid(), name:"", kind, baseURL, key: keepKey ? o.key : "", models:o.models });
+}
+function v1Cfg(o, chId){
+  const c = { ch:chId };
+  Object.keys(BASE_CFG).forEach(k=>{ if(k!=="ch" && o[k]!==undefined && o[k]!=="") c[k] = o[k]; });
+  return normCfg(c);
+}
+
+function tidy(s){
+  s.channels = (Array.isArray(s.channels) ? s.channels : []).filter(x=>x && typeof x==="object").map(normCh);
+  s.winDef = normCfg(s.winDef);
+  s.convs = (Array.isArray(s.convs) ? s.convs : []).filter(c=>c && typeof c==="object");
+  s.convs.forEach(c=>{ c.cfg = normCfg(c.cfg || s.winDef); });
+  return s;
+}
+// always returns a fresh object — windows never share one cfg by reference
+function normCfg(o){
+  o = (o && typeof o==="object") ? o : {};
+  const num = (v,d)=>{ const n = parseInt(v); return Number.isFinite(n) ? n : d; };
+  return {
+    ch: o.ch ? String(o.ch) : null,
+    model: typeof o.model==="string" ? o.model.trim() : "",
+    system: typeof o.system==="string" ? o.system : "",
+    maxTokens: Math.max(256, num(o.maxTokens, BASE_CFG.maxTokens)),
+    ctxLimit: Math.max(2, num(o.ctxLimit, BASE_CFG.ctxLimit)),
+    thinkOn: !!o.thinkOn,
+    thinkBudget: Math.max(1024, num(o.thinkBudget, BASE_CFG.thinkBudget)),
+    dsThink: DS_THINK.includes(o.dsThink) ? o.dsThink : "auto"
+  };
+}
+function normCh(x){
+  const kind = x.kind==="anthropic" ? "anthropic" : "openai";
+  const baseURL = typeof x.baseURL==="string" ? x.baseURL.trim() : "";
+  return {
+    id: x.id ? String(x.id) : uid(),
+    name: (typeof x.name==="string" && x.name.trim()) || guessName(kind, baseURL),
+    kind, baseURL,
+    key: typeof x.key==="string" ? x.key.trim() : "",
+    models: Array.isArray(x.models) ? x.models.filter(m=>typeof m==="string" && m) : []
+  };
+}
+function guessName(kind, base){
+  if(kind==="anthropic") return "Anthropic";
+  let host = "";
+  try{ host = new URL(base).hostname; }catch(_){}
+  const known = [[/deepseek/,"DeepSeek"],[/siliconflow/,"硅基流动"],[/openrouter/,"OpenRouter"],
+    [/moonshot/,"Moonshot"],[/openai\.com$/,"OpenAI"],[/^(localhost|127\.0\.0\.1)$/,"本地"]];
+  for(const [re,n] of known) if(re.test(host)) return n;
+  return host.replace(/^api\./,"") || "OpenAI 兼容";
+}
+const normBase = b => String(b||"").trim().replace(/\/+$/,"").toLowerCase();
+function sameEndpoint(a,b){
+  return a.kind===b.kind && (a.kind==="anthropic" || normBase(a.baseURL)===normBase(b.baseURL));
+}
+
+/* ── per-window lookups ── */
+function cfgOf(c){ if(!c.cfg) c.cfg = normCfg(S.winDef); return c.cfg; }
+function chOf(cfg){ return (cfg && cfg.ch && S.channels.find(x=>x.id===cfg.ch)) || null; }
+function kindOf(cfg){ const ch = chOf(cfg); return ch ? ch.kind : null; }
+// with no window open, the composer shows what the next new window will get
+function curCfg(){ const c = active(); return c ? cfgOf(c) : S.winDef; }
+// everything one request needs: the window's cfg plus the channel it points at
+function rt(cfg){ const ch = chOf(cfg); return { cfg, ch, kind: ch ? ch.kind : "anthropic" }; }
+function cfgLabel(cfg){
+  const ch = chOf(cfg);
+  return (ch ? ch.name : "未设通道")+" · "+(cfg.model || "未设模型");
+}
+
+// load only after every helper above exists (consts are not hoisted)
+let upgradeFailed = false, upgraded = false;
+let S = load();
 let saveTimer = null;
 function save(now){
   clearTimeout(saveTimer);
@@ -679,6 +879,7 @@ function paintStore(){
   el.style.width = pct.toFixed(1)+"%";
   bar.classList.toggle("warn", pct>75);
   const kb = bytes<1024 ? bytes+" B" : (bytes/1024).toFixed(0)+" KB";
+  if(quotaHit){ bar.classList.add("warn"); tx.textContent = "⚠ 存满了，最近的改动没存上 · "+kb; return; }
   tx.textContent = "存储 "+kb+(pct>75 ? " · 该导出备份了" : "");
 }
 
@@ -771,9 +972,10 @@ function estTokens(s){
   for(const ch of s) if(/[㐀-鿿豈-﫿぀-ヿ가-힯]/.test(ch)) cjk++;
   return Math.ceil(cjk + (s.length-cjk)/3.6);
 }
-function pushStat(model,u){
+// tag = {m:model, p:channel name}, taken when the request goes out
+function pushStat(tag,u){
   if(!u || (!u.in && !u.out)) return;
-  S.stats.push({t:Date.now(), m:model||"?", p:S.provider, i:u.in|0, o:u.out|0, h:u.hit|0});
+  S.stats.push({t:Date.now(), m:tag.m||"?", p:tag.p||"", i:u.in|0, o:u.out|0, h:u.hit|0});
   if(S.stats.length>3000) S.stats = S.stats.slice(-3000);
 }
 function fmtN(n){
@@ -793,9 +995,10 @@ function liveMsgs(c){
 // overflows — the prefix then stays byte-identical for many turns in a row.
 function winStartOf(c, commit){
   const live = liveMsgs(c);
+  const lim = cfgOf(c).ctxLimit;
   let a = Math.min(Math.max(0, c.win|0), live.length);
-  if(live.length - a > S.ctxLimit){
-    a = Math.max(0, live.length - Math.ceil(S.ctxLimit/2));   // jump, don't slide
+  if(live.length - a > lim){
+    a = Math.max(0, live.length - Math.ceil(lim/2));          // jump, don't slide
     while(a>0 && live[a] && live[a].role!=="user") a--;       // land on a user turn
   }
   if(commit) c.win = a;
@@ -808,7 +1011,8 @@ function buildHistory(c, commit){
   return out;
 }
 function effSystem(c){
-  let s = S.system.trim();
+  if(!c) return "";
+  let s = cfgOf(c).system.trim();
   if(c && c.summary)
     s = (s ? s+"\n\n" : "") +
         "【这次对话更早部分的摘要，用来延续上下文】\n" + c.summary;
@@ -837,11 +1041,11 @@ function paintCtx(){
 
 /* ============ conversations ============ */
 const $ = s => document.querySelector(s);
-const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 
 function active(){ return S.convs.find(c=>c.id===S.activeId) || null; }
 function newConv(){
-  const c = { id:uid(), title:"新的对话", msgs:[], ts:Date.now() };
+  closePop();
+  const c = { id:uid(), title:"新的对话", msgs:[], ts:Date.now(), cfg:normCfg(S.winDef) };
   S.convs.unshift(c); S.activeId = c.id; save(); renderAll(); $("#input").focus();
 }
 function delConv(id){
@@ -857,10 +1061,13 @@ function renderConvs(){
   S.convs.forEach(c=>{
     const d = document.createElement("div");
     d.className = "conv"+(c.id===S.activeId?" active":"");
+    const tw = document.createElement("div"); tw.className="tw";
     const t = document.createElement("span"); t.className="t"; t.textContent = c.title || "未命名";
+    const m = document.createElement("span"); m.className="m"; m.textContent = cfgLabel(cfgOf(c));
+    tw.append(t,m);
     const x = document.createElement("span"); x.className="x"; x.textContent="×"; x.title="删除";
     x.onclick = e=>{ e.stopPropagation(); delConv(c.id); };
-    d.append(t,x);
+    d.append(tw,x);
     d.onclick = ()=>{ S.activeId=c.id; save(); renderAll(); if(innerWidth<=720) $("#side").classList.add("hidden"); };
     box.appendChild(d);
   });
@@ -1034,6 +1241,9 @@ function sumCard(c){
 
 async function compact(){
   const c = active(); if(!c || streaming) return;
+  const ctx = rt(cfgOf(c));
+  if(!ctx.ch || !ctx.ch.key || !ctx.cfg.model) return toast("这个窗口的通道、Key 或模型还没设好");
+  const tag = {m:ctx.cfg.model, p:ctx.ch.name};
   const live = liveMsgs(c);
   if(live.length < 6) return toast("还太短，压了不划算");
   const keep = 6;                                   // recent turns stay verbatim
@@ -1049,17 +1259,17 @@ async function compact(){
 
   $("#btnSum").textContent = "压缩中…"; $("#btnSum").disabled = true;
   try{
-    const r = await callAPI([{role:"user",content:ask}],
+    const r = await callAPI(ctx, [{role:"user",content:ask}],
                             {system:"", noThink:true, maxTokens:1500, stream:false});
     if(!r.text.trim()) throw new Error("摘要是空的");
     c.summary  = r.text.trim();
     c.archived = c.msgs.indexOf(oldOnes[oldOnes.length-1]) + 1;
     c.win = 0;
     c.ctxHushed = false;
-    const u = S.provider==="anthropic"
+    const u = ctx.kind==="anthropic"
       ? {in:r.raw?.usage?.input_tokens|0, out:r.raw?.usage?.output_tokens|0}
       : {in:r.raw?.usage?.prompt_tokens|0, out:r.raw?.usage?.completion_tokens|0};
-    pushStat(S.model, u);
+    pushStat(tag, u);
     save(true); renderMsgs();
     toast("折叠了 "+oldOnes.length+" 条，记录都还在");
   }catch(e){ toast("压缩失败："+String(e.message||e).slice(0,60)); }
@@ -1134,14 +1344,20 @@ function msgEl(m, idx){
   return d;
 }
 
-const DS_STEPS = ["auto","off","low","high","max"];
 const DS_LABEL = {auto:"由模型定", off:"关", low:"低", high:"高", max:"最大"};
 function paintPill(){
-  const b = $("#bThink"), anth = S.provider==="anthropic";
-  const lit = anth ? S.thinkOn : (S.dsThink!=="auto" && S.dsThink!=="off");
+  const cfg = curCfg(), kind = kindOf(cfg), b = $("#bThink");
+  const lit = kind==="anthropic" ? cfg.thinkOn
+            : kind==="openai" ? (cfg.dsThink!=="auto" && cfg.dsThink!=="off") : false;
   b.classList.toggle("lit", lit);
-  $("#bThinkTxt").textContent = effortLabel();
-  $("#bModelTxt").textContent = S.model || "未设模型";
+  $("#bThinkTxt").textContent = effortLabel(cfg);
+  $("#bModelTxt").textContent = cfg.model || "未设模型";
+  $("#bModel").title = cfgLabel(cfg);
+}
+function paintTop(){
+  const cfg = curCfg();
+  $("#modelTag").textContent = cfg.model || "未设模型";
+  $("#modelTag").title = cfgLabel(cfg);
 }
 
 /* ── little popup above the toolbar ── */
@@ -1157,18 +1373,22 @@ function openPop(build, anchor){
   pop.style.top  = Math.max(10, r.top - pr.height - 8)+"px";
 }
 function popEffort(pop){
-  const anth = S.provider==="anthropic";
-  const items = anth ? EFFORT_ANTH : EFFORT_DS;
-  const cur = anth ? (S.thinkOn ? String(S.thinkBudget) : "off") : S.dsThink;
-  const h=document.createElement("div"); h.className="ph"; h.textContent="思考档位"; pop.appendChild(h);
+  const cfg = curCfg(), kind = kindOf(cfg);
+  const h=document.createElement("div"); h.className="ph"; h.textContent="思考档位 · 这个窗口"; pop.appendChild(h);
+  if(!kind){
+    const n=document.createElement("div"); n.className="pnote";
+    n.textContent = "这个窗口还没选模型。思考档位跟着通道走，先点右边的模型按钮挑一个。";
+    pop.appendChild(n); return;
+  }
+  const items = kind==="anthropic" ? EFFORT_ANTH : EFFORT_DS;
+  const cur = effortCur(cfg, kind);
   items.forEach(e=>{
     const b=document.createElement("button"); b.className="pi"+(e.v===cur?" on":"");
     b.innerHTML = '<span class="pd">'+(e.v==="off"?"○":e.v==="auto"?"·":"●")+'</span>'+
                   '<span class="pk"></span><span class="pt">✓</span>';
     b.querySelector(".pk").textContent = e.t;
     b.onclick = ()=>{
-      if(anth){ if(e.v==="off") S.thinkOn=false; else { S.thinkOn=true; S.thinkBudget=parseInt(e.v); } }
-      else S.dsThink = e.v;
+      setEffort(cfg, kind, e.v);
       save(true); paintPill(); closePop(); toast("思考 · "+e.t);
     };
     pop.appendChild(b);
@@ -1188,7 +1408,7 @@ function popTokens(pop){
   pop.appendChild(row("系统提示词", fmtN(sysTok)));
   pop.appendChild(row("合计", fmtN(sysTok+hist+typing), "tot"));
   const n=document.createElement("div"); n.className="pnote";
-  n.textContent = c ? ("带 "+ctxCost(c).n+" 条消息 · 上限 "+S.ctxLimit+" 条") : "";
+  n.textContent = c ? ("带 "+ctxCost(c).n+" 条消息 · 上限 "+cfgOf(c).ctxLimit+" 条") : "";
   pop.appendChild(n);
 }
 
@@ -1196,7 +1416,7 @@ function renderAll(){
   renderConvs();
   const c = active();
   $("#title").textContent = c ? (c.title||"未命名") : "";
-  $("#modelTag").textContent = S.model || "未设模型";
+  paintTop();
   renderMsgs();
   paintPill();
   paintStore();
@@ -1235,115 +1455,304 @@ const EFFORT_DS = [
 
 /* ── one reusable grouped-row renderer ── */
 function mkRow(o){
-  const b = document.createElement("button"); b.className = "row" + (o.sel ? " sel" : "");
+  const b = document.createElement("button");
+  b.className = "row" + (o.sel ? " sel" : "") + (o.cls ? " "+o.cls : "");
   const w = document.createElement("div"); w.className = "rw";
   const t = document.createElement("div"); t.className = "rt"; t.textContent = o.title;
-  if(o.badge){
+  const badges = o.badges || (o.badge ? [{t:o.badge, warn:o.warn}] : []);
+  badges.forEach(x=>{
     const g = document.createElement("span");
-    g.className = "bdg" + (o.warn ? " warn" : ""); g.textContent = o.badge;
+    g.className = "bdg" + (x.warn ? " warn" : ""); g.textContent = x.t;
     t.appendChild(g);
-  }
+  });
   w.appendChild(t);
   if(o.sub){ const d=document.createElement("div"); d.className="rs"; d.textContent=o.sub; w.appendChild(d); }
   b.appendChild(w);
-  const tk = document.createElementNS("http://www.w3.org/2000/svg","svg");
-  tk.setAttribute("class","tick"); tk.setAttribute("viewBox","0 0 24 24");
-  const pa = document.createElementNS("http://www.w3.org/2000/svg","path");
-  pa.setAttribute("d","M20 6L9 17l-5-5"); tk.appendChild(pa);
-  b.appendChild(tk);
+  if(o.chev){
+    const c = document.createElement("span"); c.className = "chev"; c.textContent = "›";
+    b.appendChild(c);
+  }else{
+    const tk = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    tk.setAttribute("class","tick"); tk.setAttribute("viewBox","0 0 24 24");
+    const pa = document.createElementNS("http://www.w3.org/2000/svg","path");
+    pa.setAttribute("d","M20 6L9 17l-5-5"); tk.appendChild(pa);
+    b.appendChild(tk);
+  }
   b.onclick = o.on;
   return b;
 }
 function fillGrp(el, items){ el.innerHTML=""; items.forEach(o=>el.appendChild(mkRow(o))); }
+function noteRow(txt, cls){
+  const d = document.createElement("div"); d.className = "row"+(cls ? " "+cls : "");
+  d.innerHTML = '<div class="rw"><div class="rs"></div></div>';
+  d.querySelector(".rs").textContent = txt;
+  return d;
+}
 
-function effortLabel(){
-  if(S.provider==="anthropic"){
-    if(!S.thinkOn) return "关";
-    const hit = EFFORT_ANTH.find(e=>e.v===String(S.thinkBudget));
-    return hit ? hit.t : fmtN(S.thinkBudget);
+/* ── thinking effort, per cfg (its channel decides which ladder applies) ── */
+function effortCur(cfg, kind){
+  return kind==="anthropic" ? (cfg.thinkOn ? String(cfg.thinkBudget) : "off") : cfg.dsThink;
+}
+function setEffort(cfg, kind, v){
+  if(kind==="anthropic"){
+    if(v==="off") cfg.thinkOn = false;
+    else { cfg.thinkOn = true; cfg.thinkBudget = parseInt(v); }
+  } else cfg.dsThink = v;
+}
+function effortLabel(cfg){
+  const kind = kindOf(cfg);
+  if(!kind) return "—";
+  if(kind==="anthropic"){
+    if(!cfg.thinkOn) return "关";
+    const hit = EFFORT_ANTH.find(e=>e.v===String(cfg.thinkBudget));
+    return hit ? hit.t : fmtN(cfg.thinkBudget);
   }
-  return DS_LABEL[S.dsThink] || "由模型定";
+  return DS_LABEL[cfg.dsThink] || "由模型定";
 }
 
-function providerNote(){
-  const p = S.provider, anth = p==="anthropic";
-  fillGrp($("#grpProv"), [
-    {title:"Anthropic", sub:"已实测：浏览器可直连", sel:anth,
-     on:()=>{ S.provider="anthropic"; save(true); providerNote(); paintPill(); }},
-    {title:"OpenAI 兼容", sub:"DeepSeek、硅基流动、本地 Ollama 都走这条", sel:!anth,
-     on:()=>{ S.provider="openai"; save(true); providerNote(); paintPill(); }}
-  ]);
-  $("#provNote").innerHTML = anth
-    ? "这条通道允许浏览器直连，本地 <code>file://</code> 打开也放行。"
-    : "已实测可用（DeepSeek）。个别服务会拦，先按「连接自检」。";
-  $("#wrapBase").style.display = anth ? "none" : "";
-  $("#rowModelVal").textContent  = S.model || "未设";
-  $("#rowEffortVal").textContent = effortLabel();
+/* ── channels ── */
+const KIND_LABEL = {anthropic:"Anthropic", openai:"OpenAI 兼容"};
+const apiBase = ch => (ch.baseURL.trim() || "https://api.openai.com/v1").replace(/\/+$/,"");
+function chSub(ch){
+  const parts = [KIND_LABEL[ch.kind]];
+  if(ch.kind==="openai"){
+    let host = ""; try{ host = new URL(apiBase(ch)).host; }catch(_){ host = ch.baseURL; }
+    parts.push(host);
+  }
+  parts.push(ch.models.length ? ch.models.length+" 个模型" : "还没拉列表");
+  return parts.join(" · ");
+}
+function chUsers(id){ return S.convs.filter(c=>cfgOf(c).ch===id).length; }
+// the 模型 row: model on the right (it's what gets cut on a phone otherwise), channel underneath
+function paintModelRow(val, sub, cfg){
+  const ch = chOf(cfg);
+  $(val).textContent = ch ? (cfg.model || "未选模型") : "未设";
+  $(sub).textContent = ch ? "通道 · "+ch.name : "还没选通道";
 }
 
-/* ── model picker screen ── */
+/* ══ settings sheet ══
+   The main screen edits the window that was active when the sheet opened (shConv).
+   The model/effort screens edit whichever cfg shTgt points at — that window, or the
+   new-window default. Picks save at once; text fields wait for 保存, as before.
+   The channel editor keeps what was typed whenever you leave it. */
+let shConv = null;
+let shTgt = "win";
+const FORMS = {
+  win:{sys:"#iSys", max:"#iMax", ctx:"#iCtx"},
+  def:{sys:"#dSys", max:"#dMax", ctx:"#dCtx"}
+};
+function fillForm(f, cfg){
+  $(f.sys).value = cfg.system; $(f.max).value = cfg.maxTokens; $(f.ctx).value = cfg.ctxLimit;
+}
+function readForm(f, cfg){
+  cfg.system    = $(f.sys).value;
+  cfg.maxTokens = Math.max(256, parseInt($(f.max).value)||4096);
+  cfg.ctxLimit  = Math.max(2, parseInt($(f.ctx).value)||40);
+  return cfg;
+}
+function tgtCfg(){ return (shTgt==="def" || !shConv) ? S.winDef : cfgOf(shConv); }
+// a pick changed some window's settings — repaint everything outside the sheet that shows them
+function refreshWin(){ renderConvs(); paintTop(); paintPill(); paintCtx(); }
+
+function paintMain(){
+  const c = shConv;
+  $("#winPart").style.display = c ? "" : "none";
+  if(c){
+    const cfg = cfgOf(c);
+    $("#winNote").textContent = "这一页只管当前窗口「"+(c.title||"未命名")+"」，别的窗口各有各的。";
+    paintModelRow("#rowModelVal", "#rowModelSub", cfg);
+    $("#rowEffortVal").textContent = effortLabel(cfg);
+  }
+  $("#rowChansVal").textContent = S.channels.length ? S.channels.length+" 条" : "还没有";
+}
+function paintDefs(){
+  paintModelRow("#dRowModelVal", "#dRowModelSub", S.winDef);
+  $("#dRowEffortVal").textContent = effortLabel(S.winDef);
+}
+
+/* ── model picker: 总 = a channel row that folds open, 分 = its models ── */
+let openChs = new Set();
 function paintModels(){
-  const cur = S.model;
-  const list = S.models || [];
-  if(!list.length){
-    $("#grpModels").innerHTML =
-      '<div class="row"><div class="rw"><div class="rs">还没拉过 —— 点下面「拉列表」，'+
-      '可用型号会全部列在这儿。</div></div></div>';
-  }else{
-    fillGrp($("#grpModels"), list.map(id=>({
-      title:id, sub:modelNote(id), sel:id===cur,
-      on:()=>{ S.model=id; $("#iModel").value=id; save(true);
-               paintModels(); providerNote(); renderAll(); }
-    })));
+  const cfg = tgtCfg(), box = $("#mdlList");
+  box.innerHTML = "";
+  if(!S.channels.length){
+    const g = document.createElement("div"); g.className = "grp";
+    g.appendChild(noteRow("还没有通道。点下面「新增通道」，填上接口地址和 Key，它的模型就会列在这儿。"));
+    box.appendChild(g); return;
   }
-  $("#iModel").value = cur || "";
+  S.channels.forEach(ch=>{
+    const open = openChs.has(ch.id), using = cfg.ch===ch.id;
+    const g = document.createElement("div"); g.className = "grp mgrp"+(open ? " open" : "");
+    const badges = [];
+    if(using) badges.push({t:"在用"});
+    if(!ch.key) badges.push({t:"未填 Key", warn:true});
+    g.appendChild(mkRow({ title:ch.name, sub:chSub(ch), chev:true, badges,
+      on:()=>{ open ? openChs.delete(ch.id) : openChs.add(ch.id); paintModels(); } }));
+    if(open){
+      const list = ch.models.slice();
+      if(using && cfg.model && !list.includes(cfg.model)) list.unshift(cfg.model);
+      if(!list.length) g.appendChild(noteRow("还没拉过模型列表 —— 点「拉列表」，或者在下面直接打型号 ID。", "mi"));
+      list.forEach(id=>g.appendChild(mkRow({ title:id, sub:modelNote(id), cls:"mi",
+        sel: using && cfg.model===id, on:()=>pickModel(ch, id) })));
+
+      const r = document.createElement("div"); r.className = "row rowinput";
+      const inp = document.createElement("input");
+      inp.placeholder = "或者直接打型号 ID"; inp.spellcheck = false; inp.setAttribute("autocapitalize","off");
+      const use = document.createElement("button"); use.className = "mini"; use.textContent = "用这个";
+      const go = ()=>{ const v = inp.value.trim(); if(v) pickModel(ch, v); else inp.focus(); };
+      use.onclick = go;
+      inp.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.isComposing){ e.preventDefault(); go(); } });
+      r.append(inp, use); g.appendChild(r);
+
+      const a = document.createElement("div"); a.className = "row gact";
+      const st = document.createElement("span"); st.className = "st";
+      if(!ch.key) st.textContent = "还没填 Key，先「编辑通道」填上。";
+      const pull = document.createElement("button"); pull.className = "mini"; pull.textContent = "拉列表";
+      pull.onclick = async ()=>{ if(await fetchModels(ch, stOut(st))) paintModels(); };
+      const ed = document.createElement("button"); ed.className = "mini"; ed.textContent = "编辑通道";
+      ed.onclick = ()=>openChEdit(ch);
+      a.append(st, pull, ed); g.appendChild(a);
+    }
+    box.appendChild(g);
+  });
 }
+function pickModel(ch, id){
+  const cfg = tgtCfg();
+  cfg.ch = ch.id; cfg.model = id;
+  // a default with no model is no use to the next window — seed it from this pick
+  if(cfg!==S.winDef && !S.winDef.model && (!chOf(S.winDef) || S.winDef.ch===ch.id)){
+    S.winDef.ch = ch.id; S.winDef.model = id;
+  }
+  save(true); paintModels(); refreshWin();
+}
+const stOut  = el => (ok,msg)=>{ el.className = "st"+(ok===true?" ok":ok===false?" bad":""); el.textContent = msg; };
+const boxOut = el => (ok,msg)=>{
+  el.className = "out on"+(ok===true?" ok":ok===false?" bad":"");
+  el.textContent = (ok===true?"✓ ":ok===false?"✗ ":"· ")+msg;
+};
 
 /* ── thinking effort screen ── */
 function paintEffort(){
-  const anth = S.provider==="anthropic";
-  const items = anth ? EFFORT_ANTH : EFFORT_DS;
-  const cur = anth ? (S.thinkOn ? String(S.thinkBudget) : "off") : S.dsThink;
-  fillGrp($("#grpEffort"), items.map(e=>({
+  const cfg = tgtCfg(), kind = kindOf(cfg);
+  if(!kind){
+    const g = $("#grpEffort"); g.innerHTML = "";
+    g.appendChild(noteRow("还没选模型。思考档位跟着通道类型走，先回去选个模型。"));
+    $("#noteEffort").innerHTML = ""; return;
+  }
+  const anth = kind==="anthropic";
+  const cur = effortCur(cfg, kind);
+  fillGrp($("#grpEffort"), (anth ? EFFORT_ANTH : EFFORT_DS).map(e=>({
     title:e.t, sub:e.s, sel:e.v===cur, badge:e.b || (e.w?"更费额度":""), warn:!!e.w,
-    on:()=>{
-      if(anth){
-        if(e.v==="off") S.thinkOn=false;
-        else { S.thinkOn=true; S.thinkBudget=parseInt(e.v); }
-      } else S.dsThink = e.v;
-      save(true); paintEffort(); providerNote(); paintPill();
-    }
+    on:()=>{ setEffort(cfg, kind, e.v); save(true); paintEffort(); refreshWin(); }
   })));
   $("#noteEffort").innerHTML = anth
     ? "思考的 token 算在输出里。「最大回复长度」会自动抬到预算之上，不用你操心。"
     : "DeepSeek V4 <b>默认就开着、力度 high</b>，每条都在烧输出 token。别的 OpenAI 兼容服务可能不认这个参数，报错就调回「由模型定」。";
 }
 
-async function fetchModels(){
-  const key = $("#iKey").value.trim();
-  const prov = S.provider;
-  const base = $("#iBase").value.trim().replace(/\/$/,"");
-  if(!key) return showTest(false,"先填 API Key");
-  showTest(null,"正在问接口要模型列表…");
+/* ── channel list + editor ── */
+function paintChans(){
+  const g = $("#grpChans"); g.innerHTML = "";
+  if(!S.channels.length){ g.appendChild(noteRow("还没有通道。点下面「新增通道」加一条。")); return; }
+  S.channels.forEach(ch=>{
+    const n = chUsers(ch.id);
+    g.appendChild(mkRow({ title:ch.name, sub:chSub(ch)+(n ? " · "+n+" 个窗口在用" : ""), chev:true,
+      badges: ch.key ? [] : [{t:"未填 Key", warn:true}], on:()=>openChEdit(ch) }));
+  });
+}
+let editCh = null, editKind = "openai";
+function openChEdit(ch){
+  editCh = ch || { id:uid(), name:"", kind:"openai", baseURL:"", key:"", models:[] };
+  editKind = editCh.kind;
+  $("#cName").value = ch ? ch.name : "";
+  $("#cBase").value = editCh.baseURL;
+  $("#cKey").value  = editCh.key;
+  $("#chOut").className = "out";
+  $("#btnChDel").hidden = !ch;
+  shGo("chedit", ch ? "编辑通道" : "新增通道");
+}
+function paintKind(){
+  const anth = editKind==="anthropic";
+  fillGrp($("#grpKind"), [
+    {title:"Anthropic", sub:"已实测：浏览器可直连", sel:anth,
+     on:()=>{ editKind="anthropic"; paintKind(); }},
+    {title:"OpenAI 兼容", sub:"DeepSeek、硅基流动、本地 Ollama 都走这条", sel:!anth,
+     on:()=>{ editKind="openai"; paintKind(); }}
+  ]);
+  $("#kindNote").innerHTML = anth
+    ? "这条通道允许浏览器直连，本地 <code>file://</code> 打开也放行。"
+    : "已实测可用（DeepSeek）。个别服务会拦，先按「拉模型列表」试试通不通。";
+  $("#cWrapBase").style.display = anth ? "none" : "";
+}
+// editor inputs → the channel. A new channel joins the list the first time this runs.
+function syncCh(){
+  const ch = editCh; if(!ch) return null;
+  const base = $("#cBase").value.trim();
+  // a different service means the cached model list belongs to someone else
+  if(ch.kind!==editKind || (editKind==="openai" && normBase(ch.baseURL)!==normBase(base))) ch.models = [];
+  ch.kind = editKind; ch.baseURL = base; ch.key = $("#cKey").value.trim();
+  ch.name = $("#cName").value.trim() || guessName(ch.kind, base);
+  if(!S.channels.includes(ch)){ S.channels.push(ch); adopt(ch); }
+  save(true);
+  return ch;
+}
+// leaving the editor keeps what was typed — unless it's a new channel nobody filled in
+function leaveCh(){
+  const ch = editCh; if(!ch) return;
+  const blank = !S.channels.includes(ch) &&
+    !$("#cKey").value.trim() && !$("#cName").value.trim() && !$("#cBase").value.trim();
+  if(!blank) syncCh();
+  editCh = null;
+  refreshWin();
+}
+// windows (and the default) that have no working channel yet start using a new one
+function adopt(ch){
+  if(!chOf(S.winDef)) S.winDef.ch = ch.id;
+  S.convs.forEach(c=>{ const cfg = cfgOf(c); if(!chOf(cfg)) cfg.ch = ch.id; });
+  openChs.add(ch.id);
+}
+function delChannel(ch){
+  const n = chUsers(ch.id), defHit = S.winDef.ch===ch.id;
+  // its windows follow the default; if the default used it too, the default moves on first
+  const dest = defHit ? S.channels.find(x=>x!==ch) : chOf(S.winDef);
+  const to = dest ? "「"+dest.name+"」" : "「没有通道」（得先新增一条）";
+  let msg = "删掉通道「"+ch.name+"」？";
+  if(n) msg += "\n\n有 "+n+" 个窗口在用它，删掉后它们改用默认设定里的通道"+to+"，模型要重新选。";
+  if(defHit) msg += "\n\n新窗口默认设定也在用它，会改成"+to+"，默认模型清空。";
+  if(!confirm(msg)) return false;
+  S.channels = S.channels.filter(x=>x!==ch);
+  openChs.delete(ch.id);
+  if(S.winDef.ch===ch.id){ S.winDef.ch = S.channels[0]?.id || null; S.winDef.model = ""; }
+  S.convs.forEach(c=>{
+    const cfg = cfgOf(c);
+    if(cfg.ch===ch.id){ cfg.ch = S.winDef.ch; cfg.model = ""; }
+  });
+  save(true); refreshWin();
+  return true;
+}
+
+async function fetchModels(ch, out){
+  if(!ch.key){ out(false,"先填 API Key"); return false; }
+  out(null,"正在问「"+ch.name+"」要模型列表…");
   try{
     let url, headers;
-    if(prov==="anthropic"){
+    if(ch.kind==="anthropic"){
       url = "https://api.anthropic.com/v1/models?limit=100";
-      headers = { "x-api-key":key, "anthropic-version":"2023-06-01",
+      headers = { "x-api-key":ch.key, "anthropic-version":"2023-06-01",
                   "anthropic-dangerous-direct-browser-access":"true" };
     }else{
-      url = (base||"https://api.openai.com/v1")+"/models";
-      headers = { "authorization":"Bearer "+key };
+      url = apiBase(ch)+"/models";
+      headers = { "authorization":"Bearer "+ch.key };
     }
     const r = await fetch(url,{headers});
     if(!r.ok) throw new Error("HTTP "+r.status+" "+(await r.text()).slice(0,200));
     const j = await r.json();
     const ids = (j.data||[]).map(m=>m.id).filter(Boolean).sort();
-    S.models = ids; save(true);
-    if(!S.model && ids.length){ S.model = ids[0]; }
-    paintModels(); providerNote(); renderAll();
-    toast("拿到 "+ids.length+" 个模型");
-  }catch(e){ showTest(false, corsHint(e)); }
+    ch.models = ids; save(true);
+    out(true, "通了，拿到 "+ids.length+" 个模型");
+    toast("「"+ch.name+"」拿到 "+ids.length+" 个模型");
+    return true;
+  }catch(e){ out(false, corsHint(e)); return false; }
 }
 
 function corsHint(e){
@@ -1358,78 +1767,82 @@ function corsHint(e){
   return m;
 }
 
-function showTest(ok,msg){
-  const t=$("#testOut"); t.className="on"+(ok===true?" ok":ok===false?" bad":"");
-  t.textContent = (ok===true?"✓ ":ok===false?"✗ ":"· ")+msg;
-}
-
+let testSeq = 0;
 async function testConn(){
-  syncFromForm();
-  if(!S.key) return showTest(false,"先填 API Key");
-  if(!S.model) return showTest(false,"先填模型 ID（或点「拉列表」）");
-  showTest(null,"正在敲门…");
+  if(!shConv) return;
+  const tok = ++testSeq, show = boxOut($("#testOut"));
+  const out = (ok,m)=>{ if(tok===testSeq) show(ok,m); };
+  // test what's on screen right now, without saving it
+  const cfg = readForm(FORMS.win, Object.assign({}, cfgOf(shConv)));
+  const ctx = rt(cfg);
+  if(!ctx.ch) return out(false,"这个窗口还没选模型（点上面「模型」）");
+  if(!ctx.ch.key) return out(false,"通道「"+ctx.ch.name+"」还没填 API Key");
+  if(!cfg.model) return out(false,"先选模型（或在模型页点「拉列表」）");
+  out(null,"正在敲门…（"+ctx.ch.name+" · "+cfg.model+"）");
   try{
     const t0 = performance.now();
-    const res = await callAPI([{role:"user",content:"回复两个字：在的"}],
+    const res = await callAPI(ctx, [{role:"user",content:"回复两个字：在的"}],
                               {maxTokens:32, stream:false, noThink:true});
     const ms = Math.round(performance.now()-t0);
-    showTest(true, "通了（"+ms+"ms）。对面说：“"+res.text.trim().slice(0,40)+"”");
-  }catch(e){ showTest(false, corsHint(e)); }
+    out(true, "通了（"+ms+"ms）。对面说：“"+res.text.trim().slice(0,40)+"”");
+  }catch(e){ out(false, corsHint(e)); }
 }
 
-function buildReq(msgs, opt){
+// ctx = rt(cfg): the sending window's settings + the channel they point at
+function buildReq(ctx, msgs, opt){
+  const {cfg, ch} = ctx;
   const stream = opt.stream !== false;
-  let maxTokens = opt.maxTokens || S.maxTokens;
-  const sys = (opt.system !== undefined ? opt.system : S.system).trim();
-  if(S.provider==="anthropic"){
-    const body = { model:S.model, max_tokens:maxTokens, messages:msgs, stream };
+  let maxTokens = opt.maxTokens || cfg.maxTokens;
+  const sys = (opt.system !== undefined ? opt.system : cfg.system).trim();
+  if(ch.kind==="anthropic"){
+    const body = { model:cfg.model, max_tokens:maxTokens, messages:msgs, stream };
     if(sys) body.system = sys;
-    if(S.thinkOn && !opt.noThink){
-      const budget = Math.max(1024, S.thinkBudget|0);
+    if(cfg.thinkOn && !opt.noThink){
+      const budget = Math.max(1024, cfg.thinkBudget|0);
       // max_tokens must leave room for the answer on top of the thinking budget
       body.max_tokens = Math.max(maxTokens, budget + 1024);
       body.thinking = { type:"enabled", budget_tokens:budget };
     }
     return {
       url:"https://api.anthropic.com/v1/messages",
-      headers:{ "content-type":"application/json", "x-api-key":S.key,
+      headers:{ "content-type":"application/json", "x-api-key":ch.key,
                 "anthropic-version":"2023-06-01",
                 "anthropic-dangerous-direct-browser-access":"true" },
       body
     };
   }
   const full = sys ? [{role:"system",content:sys}, ...msgs] : msgs;
-  const body = { model:S.model, max_tokens:maxTokens, messages:full, stream };
+  const body = { model:cfg.model, max_tokens:maxTokens, messages:full, stream };
   // DeepSeek V4 defaults to thinking ENABLED at effort "high" — that is billed as
   // output on every single turn. "auto" sends nothing (safe for other providers
   // that would 400 on an unknown field); any other setting takes explicit control.
-  if(!opt.noThink && S.dsThink && S.dsThink!=="auto"){
-    if(S.dsThink==="off") body.thinking = { type:"disabled" };
-    else { body.thinking = { type:"enabled" }; body.reasoning_effort = S.dsThink; }
+  if(!opt.noThink && cfg.dsThink && cfg.dsThink!=="auto"){
+    if(cfg.dsThink==="off") body.thinking = { type:"disabled" };
+    else { body.thinking = { type:"enabled" }; body.reasoning_effort = cfg.dsThink; }
   }
   return {
-    url:(S.baseURL||"https://api.openai.com/v1").replace(/\/$/,"")+"/chat/completions",
-    headers:{ "content-type":"application/json", "authorization":"Bearer "+S.key },
+    url:apiBase(ch)+"/chat/completions",
+    headers:{ "content-type":"application/json", "authorization":"Bearer "+ch.key },
     body
   };
 }
 
-async function callAPI(msgs, opt={}){
-  const {url,headers,body} = buildReq(msgs,opt);
+async function callAPI(ctx, msgs, opt={}){
+  const {url,headers,body} = buildReq(ctx, msgs, opt);
   const r = await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal:opt.signal});
   if(!r.ok){
     let d=""; try{ d=(await r.text()).slice(0,500); }catch(_){}
     throw new Error("HTTP "+r.status+"\n"+d);
   }
   const j = await r.json();
-  const text = S.provider==="anthropic"
+  const text = ctx.kind==="anthropic"
     ? (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("")
     : (j.choices?.[0]?.message?.content || "");
   return {text, raw:j};
 }
 
-async function streamAPI(msgs, onDelta, onThink, signal, extra){
-  const {url,headers,body} = buildReq(msgs, Object.assign({stream:true}, extra||{}));
+async function streamAPI(ctx, msgs, onDelta, onThink, signal, extra){
+  const {url,headers,body} = buildReq(ctx, msgs, Object.assign({stream:true}, extra||{}));
   const r = await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal});
   if(!r.ok){
     let d=""; try{ d=(await r.text()).slice(0,500); }catch(_){}
@@ -1450,7 +1863,7 @@ async function streamAPI(msgs, onDelta, onThink, signal, extra){
         const data = line.slice(5).trim();
         if(!data || data==="[DONE]") continue;
         let j; try{ j = JSON.parse(data); }catch(_){ continue; }
-        if(S.provider==="anthropic"){
+        if(ctx.kind==="anthropic"){
           if(j.type==="content_block_delta"){
             // extended thinking arrives as its own delta type, not as text
             if(j.delta?.type==="thinking_delta" && j.delta.thinking) onThink(j.delta.thinking);
@@ -1478,7 +1891,15 @@ async function streamAPI(msgs, onDelta, onThink, signal, extra){
 /* ============ send loop ============ */
 async function run(){
   const c = active(); if(!c) return;
-  if(!S.key || !S.model){ openSet(); return toast("先把 Key 和模型填上"); }
+  // this window's own settings, fixed for the whole turn even if they change mid-stream
+  const ctx = rt(normCfg(cfgOf(c)));
+  if(!ctx.ch){ openPicker(); return toast("先给这个窗口选个模型"); }
+  if(!ctx.ch.key){
+    openSet(); shGo("chans","通道"); openChEdit(ctx.ch);
+    return toast("通道「"+ctx.ch.name+"」还没填 API Key");
+  }
+  if(!ctx.cfg.model){ openPicker(); return toast("先给这个窗口选个模型"); }
+  const tag = {m:ctx.cfg.model, p:ctx.ch.name};
 
   streaming = true; setSendState(true); paintCtx();
   // NOTE: thinking is deliberately NOT replayed into history — DeepSeek rejects it
@@ -1521,9 +1942,9 @@ async function run(){
   };
 
   try{
-    const usage = await streamAPI(hist, onDelta, onThink, ctl.signal, {system:effSystem(c)});
+    const usage = await streamAPI(ctx, hist, onDelta, onThink, ctl.signal, {system:effSystem(c)});
     holder.content = acc;
-    if(usage && (usage.in||usage.out)){ holder.usage = usage; pushStat(S.model, usage); }
+    if(usage && (usage.in||usage.out)){ holder.usage = usage; pushStat(tag, usage); }
     if(!acc.trim()){ holder.content="(空回复)"; }
   }catch(e){
     if(e.name==="AbortError"){
@@ -1565,7 +1986,7 @@ function submit(){
 function doExport(){
   const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
   const dump = structuredClone(S);
-  dump.key = "";                                   // never bake the key into a backup file
+  dump.channels.forEach(ch=>ch.key = "");          // never bake a key into a backup file
   const blob = new Blob([JSON.stringify(dump,null,2)],{type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -1581,13 +2002,42 @@ function doImport(file){
     try{
       const j = JSON.parse(fr.result);
       if(!Array.isArray(j.convs)) throw new Error("不像小窗的备份");
+      // Backups carry no keys. A channel already here (same id, or same name and
+      // address) keeps its key; anything else is added and needs its key filled in.
+      const map = {};                              // backup channel id → channel id here
+      let def, born = 0;
+      // look-alikes only match channels that were here before this import, each one once
+      const before = S.channels.slice(), claimed = new Set();
+      const merge = (b, byName)=>{
+        const hit = S.channels.find(m=>m.id===b.id) ||
+                    before.find(m=>!claimed.has(m.id) && (!byName || m.name===b.name) && sameEndpoint(m,b));
+        if(hit){
+          claimed.add(hit.id);
+          if(!hit.models.length && b.models.length) hit.models = b.models;
+          return hit.id;
+        }
+        b.key = ""; S.channels.push(b); claimed.add(b.id); born++; return b.id;
+      };
+      if(Array.isArray(j.channels)){
+        j.channels.forEach(x=>{ if(x && typeof x==="object"){ const b = normCh(x); map[b.id] = merge(b, true); } });
+        def = normCfg(j.winDef || S.winDef);
+      }else{
+        // a backup from before windows had their own settings: one global set
+        def = v1Cfg(j, merge(v1Channel(j, false), false));
+      }
+      const remap = cfg=>{
+        if(cfg.ch && map[cfg.ch]) cfg.ch = map[cfg.ch];
+        else if(cfg.ch && !S.channels.some(m=>m.id===cfg.ch)) cfg.ch = null;
+        return cfg;
+      };
+      remap(def);
       const mine = new Set(S.convs.map(c=>c.id));
-      const add = j.convs.filter(c=>!mine.has(c.id));
+      const add = j.convs.filter(c=>c && typeof c==="object" && !mine.has(c.id));
+      add.forEach(c=>{ c.cfg = remap(normCfg(c.cfg || def)); });
       S.convs = [...add, ...S.convs];
-      ["provider","baseURL","model","system","maxTokens","ctxLimit","theme",
-       "thinkOn","thinkBudget","sumAt","dsThink"]
-        .forEach(k=>{ if(j[k]!==undefined && j[k]!=="") S[k]=j[k]; });
-      if(Array.isArray(j.models) && j.models.length) S.models = j.models;
+      S.winDef = def;                              // restoring a backup restores its settings, as before
+      if(j.theme) S.theme = j.theme;
+      if(j.sumAt) S.sumAt = j.sumAt;
       if(j.prices) S.prices = Object.assign({}, j.prices, S.prices);
       if(Array.isArray(j.stats)){                    // merge flows, drop exact dupes
         const seen = new Set(S.stats.map(s=>s.t+"|"+s.m+"|"+s.i+"|"+s.o));
@@ -1597,7 +2047,7 @@ function doImport(file){
       }
       if(!S.activeId) S.activeId = S.convs[0]?.id||null;
       save(true); renderAll(); applyTheme();
-      toast("合并了 "+add.length+" 条对话");
+      toast("合并了 "+add.length+" 条对话"+(born ? "，新加了 "+born+" 条通道（Key 要重新填）" : ""));
     }catch(e){ toast("导入失败："+e.message); }
   };
   fr.readAsText(file);
@@ -1711,44 +2161,48 @@ function applyTheme(){
   if(S.theme==="auto") r.removeAttribute("data-theme");
   else r.setAttribute("data-theme",S.theme);
 }
-let shStack = ["main"];
-function shGo(sc, title){
-  shStack.push(sc);
-  document.querySelectorAll(".sh-screen").forEach(e=>e.hidden = e.dataset.sc!==sc);
-  $("#shTitle").textContent = title;
+// every screen repaints itself when it is shown (also when you come back to it)
+let shStack = [];
+const SH_PAINT = { main:paintMain, model:paintModels, effort:paintEffort,
+                   chans:paintChans, chedit:paintKind, defs:paintDefs };
+function shShow(){
+  const top = shStack[shStack.length-1];
+  document.querySelectorAll(".sh-screen").forEach(e=>e.hidden = e.dataset.sc!==top.sc);
+  $("#shTitle").textContent = top.title;
   $("#shBack").hidden = shStack.length<2;
   $(".sh-body").scrollTop = 0;
 }
+function shGo(sc, title){
+  shStack.push({sc, title});
+  SH_PAINT[sc](); shShow();
+}
 function shBack(){
   if(shStack.length<2) return closeSheet();
-  shStack.pop();
-  const sc = shStack[shStack.length-1];
-  document.querySelectorAll(".sh-screen").forEach(e=>e.hidden = e.dataset.sc!==sc);
-  $("#shTitle").textContent = "设置";
-  $("#shBack").hidden = true;
-  $(".sh-body").scrollTop = 0;
+  if(shStack.pop().sc==="chedit") leaveCh();
+  SH_PAINT[shStack[shStack.length-1].sc](); shShow();
 }
 function openSet(){
-  $("#iKey").value=S.key; $("#iSys").value=S.system;
-  $("#iMax").value=S.maxTokens; $("#iCtx").value=S.ctxLimit; $("#iBase").value=S.baseURL;
-  $("#iModel").value=S.model;
-  shStack=["main"]; shGo("main","设置"); shStack=["main"]; $("#shBack").hidden=true;
-  providerNote(); paintModels(); paintEffort();
-  $("#testOut").className="";
+  shConv = active(); shTgt = "win"; editCh = null; testSeq++;
+  if(shConv) fillForm(FORMS.win, cfgOf(shConv));
+  fillForm(FORMS.def, S.winDef);
+  $("#testOut").className = "out";
+  shStack = []; shGo("main","设置");
   $("#sheet").classList.add("on");
   requestAnimationFrame(()=>$("#sheet").classList.add("in"));
 }
+// the picker opens with the target's own channel unfolded
+function goPicker(tgt, title){
+  shTgt = tgt;
+  const cfg = tgtCfg();
+  openChs = new Set(chOf(cfg) ? [cfg.ch] : S.channels.length===1 ? [S.channels[0].id] : []);
+  shGo("model", title);
+}
+function goEffort(tgt, title){ shTgt = tgt; shGo("effort", title); }
+function openPicker(){ openSet(); goPicker("win","选择模型"); }
 function closeSheet(){
+  if(editCh) leaveCh();
   $("#sheet").classList.remove("in");
   setTimeout(()=>$("#sheet").classList.remove("on"), 240);
-}
-function syncFromForm(){
-  S.key=$("#iKey").value.trim();
-  S.model=$("#iModel").value.trim();
-  S.system=$("#iSys").value;
-  S.baseURL=$("#iBase").value.trim();
-  S.maxTokens=Math.max(256,parseInt($("#iMax").value)||4096);
-  S.ctxLimit=Math.max(2,parseInt($("#iCtx").value)||40);
 }
 
 /* ============ wire up ============ */
@@ -1758,15 +2212,53 @@ $("#btnSet").onclick = openSet;
 $("#shClose").onclick = closeSheet;
 $("#shBack").onclick = shBack;
 $("#sheet .veil").onclick = closeSheet;
-$("#rowModel").onclick  = ()=>{ paintModels(); shGo("model","选择模型"); };
-$("#rowEffort").onclick = ()=>{ paintEffort(); shGo("effort","思考档位"); };
-$("#btnSave").onclick = ()=>{ syncFromForm(); save(true); renderAll(); closeSheet(); toast("已保存"); };
+$("#rowModel").onclick   = ()=>goPicker("win","选择模型");
+$("#rowEffort").onclick  = ()=>goEffort("win","思考档位");
+$("#dRowModel").onclick  = ()=>goPicker("def","默认模型");
+$("#dRowEffort").onclick = ()=>goEffort("def","默认思考档位");
+$("#rowChans").onclick   = ()=>shGo("chans","通道");
+$("#rowDefs").onclick    = ()=>shGo("defs","新窗口默认设定");
+$("#btnChAdd").onclick   = ()=>openChEdit(null);
+$("#btnMdlAdd").onclick  = ()=>openChEdit(null);
+$("#btnChModels").onclick = async ()=>{
+  const out = boxOut($("#chOut"));
+  if(!$("#cKey").value.trim()) return out(false,"先填 API Key");
+  const ch = syncCh(); if(!ch) return;
+  $("#btnChDel").hidden = false;
+  shStack[shStack.length-1].title = $("#shTitle").textContent = "编辑通道";
+  // a late answer must not land in the editor of a different channel
+  await fetchModels(ch, (ok,m)=>{ if(editCh===ch) out(ok,m); });
+};
+$("#btnChDel").onclick = ()=>{
+  const ch = editCh;
+  if(!ch || !S.channels.includes(ch)) return;
+  if(!delChannel(ch)) return;
+  editCh = null; shBack(); toast("通道已删");
+};
+$("#btnToDef").onclick = ()=>{
+  if(!shConv) return;
+  S.winDef = normCfg(readForm(FORMS.win, cfgOf(shConv)));
+  fillForm(FORMS.def, S.winDef);
+  save(true); refreshWin(); toast("已存为默认 · 以后新开的窗口照这个来");
+};
+$("#btnFromDef").onclick = ()=>{
+  if(!shConv) return;
+  if(!confirm("把这个窗口的模型、思考档位、人设和进阶设定都改回默认？")) return;
+  shConv.cfg = normCfg(S.winDef);
+  fillForm(FORMS.win, shConv.cfg);
+  save(true); paintMain(); refreshWin(); toast("已恢复默认");
+};
+$("#btnSave").onclick = ()=>{
+  if(editCh) leaveCh();
+  if(shConv && S.convs.includes(shConv)) readForm(FORMS.win, cfgOf(shConv));
+  readForm(FORMS.def, S.winDef);
+  save(true); renderAll(); closeSheet(); toast("已保存");
+};
 $("#btnTest").onclick = testConn;
-$("#btnModels").onclick = fetchModels;
-$("#bThink").onclick = e=>{ e.stopPropagation(); openPop(popEffort, $("#bThink")); };
+$("#bThink").onclick = e=>{ e.stopPropagation(); if(!active()) newConv(); openPop(popEffort, $("#bThink")); };
 $("#bTok").onclick   = e=>{ e.stopPropagation(); openPop(popTokens, $("#bTok")); };
 $("#bSet").onclick   = openSet;
-$("#bModel").onclick = ()=>{ openSet(); setTimeout(()=>{ paintModels(); shGo("model","选择模型"); }, 30); };
+$("#bModel").onclick = ()=>{ if(!active()) newConv(); openPicker(); };
 document.addEventListener("pointerdown", e=>{
   if(!$("#pop").hidden && !e.target.closest("#pop") && !e.target.closest(".bic")) closePop();
 }, true);
@@ -1848,9 +2340,11 @@ $("#main").addEventListener("pointerdown", e=>{
 }, true);
 addEventListener("resize", ()=>{ if(!narrow()) $("#side").classList.remove("hidden"); });
 applyTheme();
+if(upgraded) save(true);             // settle the new layout (and its channel ids) right away
 if(!S.convs.length) newConv(); else renderAll();
 autoSize();
-if(!storageOK) toast("这个浏览器不让本地存储——记录只在内存里，关页面就没了，请常导出");
+if(upgradeFailed) toast("旧存档升级出错了：原来的记录一个字没动，这次先不往里写。别清浏览器数据，把情况告诉开发者");
+else if(!storageOK) toast("这个浏览器不让本地存储——记录只在内存里，关页面就没了，请常导出");
 </script>
 </body>
 </html>
