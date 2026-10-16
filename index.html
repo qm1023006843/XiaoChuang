@@ -465,6 +465,8 @@ button.row:active{background:var(--bg-3)}
 #pop .pi .pk{flex:1}
 #pop .pi .pt{opacity:0;color:var(--accent)}
 #pop .pi.on .pt{opacity:1}
+#pop .pi.pact{color:var(--accent);margin-top:2px}
+#pop .pi:disabled{opacity:.4;cursor:default;background:none}
 #pop .prow{display:flex;justify-content:space-between;gap:16px;padding:7px 11px;font-size:13px}
 #pop .prow span:last-child{font-family:var(--mono);color:var(--fg-2)}
 #pop .prow.tot{border-top:1px solid var(--line);margin-top:3px;padding-top:9px;font-weight:600}
@@ -1227,7 +1229,7 @@ function paintCtx(){
   if(!c){ bar.classList.remove("on"); mini.textContent="0"; return; }
   const {n,tok} = ctxCost(c);
   const typing = estTokens($("#input") ? $("#input").value : "");
-  mini.textContent = fmtN(tok + typing);
+  mini.textContent = compacting ? "压缩中…" : fmtN(tok + typing);
   const over = n >= S.sumAt;
   bar.classList.toggle("on", over && !c.ctxHushed && !streaming);
   bar.classList.toggle("hot", n >= S.sumAt*1.6);
@@ -1435,8 +1437,16 @@ function sumCard(c){
   return w;
 }
 
+// both ways in (the bar's button, the ↑ popup) and the toolbar show that it is running
+let compacting = false;
+function paintSum(){
+  $("#btnSum").textContent = compacting ? "压缩中…" : "压缩成摘要";
+  $("#btnSum").disabled = compacting;
+  $("#bTok").classList.toggle("lit", compacting);
+  paintCtx();
+}
 async function compact(){
-  const c = active(); if(!c || streaming) return;
+  const c = active(); if(!c || streaming || compacting) return;
   const ctx = rt(cfgOf(c));
   if(!ctx.ch || !ctx.ch.key || !ctx.cfg.model) return toast("这个窗口的通道、Key 或模型还没设好");
   const tag = {m:ctx.cfg.model, p:ctx.ch.name};
@@ -1453,7 +1463,8 @@ async function compact(){
     "2. 保留未解决的问题和待办\n" +
     "3. 去掉寒暄和重复\n4. 直接输出摘要正文，别写开场白";
 
-  $("#btnSum").textContent = "压缩中…"; $("#btnSum").disabled = true;
+  compacting = true; paintSum();
+  toast("正在压缩，等模型写完摘要…");
   try{
     const r = await callAPI(ctx, [{role:"user",content:ask}],
                             {system:"", noThink:true, maxTokens:1500, stream:false});
@@ -1466,7 +1477,7 @@ async function compact(){
     save(true); renderMsgs();
     toast("折叠了 "+oldOnes.length+" 条，记录都还在");
   }catch(e){ toast("压缩失败："+String(e.message||e).slice(0,60)); }
-  finally{ $("#btnSum").textContent="压缩成摘要"; $("#btnSum").disabled=false; }
+  finally{ compacting = false; paintSum(); }
 }
 
 function thinkEl(text, open){
@@ -1603,6 +1614,17 @@ function popTokens(pop){
   const n=document.createElement("div"); n.className="pnote";
   n.textContent = c ? ("带 "+ctxCost(c).n+" 条消息 · 上限 "+cfgOf(c).ctxLimit+" 条") : "";
   pop.appendChild(n);
+  if(!c) return;
+  // the bar above the composer only shows past S.sumAt messages (and can be dismissed) — this is always here
+  const b=document.createElement("button"); b.className="pi pact";
+  b.innerHTML='<span class="pd">⇣</span><span class="pk"></span>';
+  b.querySelector(".pk").textContent = compacting ? "压缩中…" : c.summary ? "再压缩一次" : "压缩成摘要";
+  b.disabled = compacting || streaming;
+  b.onclick = ()=>{ closePop(); compact(); };
+  pop.appendChild(b);
+  const t=document.createElement("div"); t.className="pnote";
+  t.textContent = "较早的消息写成摘要，最近 6 条原样保留。压缩本身算一次请求；压完不满意，摘要卡片上能撤销。";
+  pop.appendChild(t);
 }
 
 function renderAll(){
