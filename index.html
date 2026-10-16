@@ -1266,10 +1266,7 @@ async function compact(){
     c.archived = c.msgs.indexOf(oldOnes[oldOnes.length-1]) + 1;
     c.win = 0;
     c.ctxHushed = false;
-    const u = ctx.kind==="anthropic"
-      ? {in:r.raw?.usage?.input_tokens|0, out:r.raw?.usage?.output_tokens|0}
-      : {in:r.raw?.usage?.prompt_tokens|0, out:r.raw?.usage?.completion_tokens|0};
-    pushStat(tag, u);
+    pushStat(tag, readUsage(ctx.kind, r.raw?.usage));
     save(true); renderMsgs();
     toast("折叠了 "+oldOnes.length+" 条，记录都还在");
   }catch(e){ toast("压缩失败："+String(e.message||e).slice(0,60)); }
@@ -1813,6 +1810,9 @@ function buildReq(ctx, msgs, opt){
   }
   const full = sys ? [{role:"system",content:sys}, ...msgs] : msgs;
   const body = { model:cfg.model, max_tokens:maxTokens, messages:full, stream };
+  // OpenAI and relays like new-api only put usage (and the cache count in it)
+  // into a stream when asked to
+  if(stream) body.stream_options = { include_usage:true };
   // DeepSeek V4 defaults to thinking ENABLED at effort "high" — that is billed as
   // output on every single turn. "auto" sends nothing (safe for other providers
   // that would 400 on an unknown field); any other setting takes explicit control.
@@ -1825,6 +1825,22 @@ function buildReq(ctx, msgs, opt){
     headers:{ "content-type":"application/json", "authorization":"Bearer "+ch.key },
     body
   };
+}
+
+// Every service names its usage fields differently — normalise to {in, out, hit}.
+//   DeepSeek:                         prompt_cache_hit_tokens
+//   OpenAI 标准 / new-api 这类中转:    prompt_tokens_details.cached_tokens
+//   Claude:                           cache_read_input_tokens — and its input_tokens
+//                                     leaves out cache reads/writes, so add them back
+function readUsage(kind, u){
+  if(!u) return null;
+  if(kind==="anthropic"){
+    const rd = u.cache_read_input_tokens|0, wr = u.cache_creation_input_tokens|0;
+    return { in:(u.input_tokens|0)+rd+wr, out:u.output_tokens|0, hit:rd };
+  }
+  const hit = Math.max(u.prompt_cache_hit_tokens|0, u.prompt_tokens_details?.cached_tokens|0,
+                       u.cache_read_input_tokens|0);
+  return { in:u.prompt_tokens|0, out:u.completion_tokens|0, hit };
 }
 
 async function callAPI(ctx, msgs, opt={}){
@@ -1843,11 +1859,18 @@ async function callAPI(ctx, msgs, opt={}){
 
 async function streamAPI(ctx, msgs, onDelta, onThink, signal, extra){
   const {url,headers,body} = buildReq(ctx, msgs, Object.assign({stream:true}, extra||{}));
-  const r = await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal});
-  if(!r.ok){
-    let d=""; try{ d=(await r.text()).slice(0,500); }catch(_){}
-    throw new Error("HTTP "+r.status+"\n"+d);
+  const post = async ()=>{
+    const r = await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal});
+    let d=""; if(!r.ok){ try{ d=(await r.text()).slice(0,500); }catch(_){} }
+    return {r, d};
+  };
+  let {r, d} = await post();
+  // a few strict servers refuse stream_options outright — send the old request instead
+  if(!r.ok && body.stream_options && /stream_options/i.test(d)){
+    delete body.stream_options;
+    ({r, d} = await post());
   }
+  if(!r.ok) throw new Error("HTTP "+r.status+"\n"+d);
   const reader = r.body.getReader();
   const dec = new TextDecoder();
   let buf="", usage={in:0,out:0};
@@ -1869,7 +1892,8 @@ async function streamAPI(ctx, msgs, onDelta, onThink, signal, extra){
             if(j.delta?.type==="thinking_delta" && j.delta.thinking) onThink(j.delta.thinking);
             else if(j.delta?.text) onDelta(j.delta.text);
           }
-          if(j.type==="message_start" && j.message?.usage) usage.in = j.message.usage.input_tokens||0;
+          if(j.type==="message_start" && j.message?.usage)
+            Object.assign(usage, readUsage("anthropic", j.message.usage));
           if(j.type==="message_delta" && j.usage) usage.out = j.usage.output_tokens||0;
         }else{
           const d = j.choices?.[0]?.delta || {};
@@ -1877,10 +1901,7 @@ async function streamAPI(ctx, msgs, onDelta, onThink, signal, extra){
           const rt = d.reasoning_content ?? d.reasoning;
           if(rt) onThink(rt);
           if(d.content) onDelta(d.content);
-          if(j.usage){
-            usage.in=j.usage.prompt_tokens||0; usage.out=j.usage.completion_tokens||0;
-            if(j.usage.prompt_cache_hit_tokens!=null) usage.hit=j.usage.prompt_cache_hit_tokens|0;
-          }
+          if(j.usage) Object.assign(usage, readUsage("openai", j.usage));
         }
       }
     }
