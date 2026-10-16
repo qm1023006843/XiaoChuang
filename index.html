@@ -25,6 +25,14 @@
   --topH:calc(50px + env(safe-area-inset-top, 0px));
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  /* extras a palette may override — these defaults are exactly the original look */
+  --page:none;                  /* wash painted behind the whole app */
+  --glass:var(--bg);            /* top bar + composer */
+  --glass-side:var(--bg-2);     /* sidebar */
+  --blur:none;                  /* backdrop-filter behind those */
+  --user-fg:var(--fg);
+  --on-accent:#fff;             /* text and icons sitting on an accent background */
+  --accent-grad:var(--accent);  /* send button (and, per palette, a few headline bits) */
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
@@ -44,9 +52,120 @@
   --user-bg:#2b261f; --ai-bg:transparent;
   --danger:#d97b6c; --ok:#7fae86;
 }
+
+/* ── palettes: the original above is "warm"; every other one is a block keyed by
+   data-palette, light first, then dark for both the system setting and the 主题 button.
+   Adding one = a block here + an entry in PALETTES. ── */
+:root[data-palette="tide"]{
+  --bg:#f3f9f9; --bg-2:#e7f3f3; --bg-3:#d6ecec;
+  --fg:#0d2730; --fg-2:#3d5c66; --fg-3:#6a8a92;
+  --line:#d3e6e7; --line-2:#b2d2d5;
+  --accent:#007d87; --accent-soft:#d2efed;
+  --accent-grad:linear-gradient(135deg,#00a39a 0%,#1f6fd6 100%);
+  --user-bg:linear-gradient(135deg,#078585 0%,#1f5fc4 100%); --user-fg:#fff;
+  --danger:#d03a4f; --ok:#12906a;
+  --radius:18px;
+  --glow:rgba(16,110,170,.42);
+  --page:radial-gradient(900px 520px at 0% 0%,rgba(0,190,170,.14),transparent 65%),
+         radial-gradient(900px 620px at 100% 100%,rgba(40,110,240,.13),transparent 65%);
+  --glass:rgba(243,249,249,.72); --glass-side:rgba(226,241,241,.88);
+  --blur:blur(16px) saturate(150%);
+}
+@media (prefers-color-scheme:dark){
+  :root[data-palette="tide"]:not([data-theme="light"]){
+    --bg:#071317; --bg-2:#0c1e23; --bg-3:#132b31;
+    --fg:#e2f4f3; --fg-2:#9dbcbf; --fg-3:#67878b;
+    --line:#16323a; --line-2:#24464e;
+    --accent:#2ee6c8; --accent-soft:#0c3533; --on-accent:#04201f;
+    --accent-grad:linear-gradient(135deg,#2ee6c8 0%,#4f8dff 100%);
+    --user-bg:linear-gradient(135deg,#0a7c78 0%,#1f56c0 100%);
+    --danger:#ff7a8a; --ok:#3ddc97;
+    --glow:rgba(46,230,200,.32);
+    --page:radial-gradient(900px 520px at 0% 0%,rgba(46,230,200,.10),transparent 65%),
+           radial-gradient(900px 620px at 100% 100%,rgba(79,141,255,.14),transparent 65%);
+    --glass:rgba(7,19,23,.7); --glass-side:rgba(10,26,31,.88);
+    --blur:blur(16px) saturate(140%);
+  }
+}
+:root[data-palette="tide"][data-theme="dark"]{
+  --bg:#071317; --bg-2:#0c1e23; --bg-3:#132b31;
+  --fg:#e2f4f3; --fg-2:#9dbcbf; --fg-3:#67878b;
+  --line:#16323a; --line-2:#24464e;
+  --accent:#2ee6c8; --accent-soft:#0c3533; --on-accent:#04201f;
+  --accent-grad:linear-gradient(135deg,#2ee6c8 0%,#4f8dff 100%);
+  --user-bg:linear-gradient(135deg,#0a7c78 0%,#1f56c0 100%);
+  --danger:#ff7a8a; --ok:#3ddc97;
+  --glow:rgba(46,230,200,.32);
+  --page:radial-gradient(900px 520px at 0% 0%,rgba(46,230,200,.10),transparent 65%),
+         radial-gradient(900px 620px at 100% 100%,rgba(79,141,255,.14),transparent 65%);
+  --glass:rgba(7,19,23,.7); --glass-side:rgba(10,26,31,.88);
+  --blur:blur(16px) saturate(140%);
+}
+/* 雾青: built around #b5d9dc. Too pale to read as text on white, so in light it is the
+   bubble, borders and wash, and a deeper shade of it carries text. In dark it is still the bubble,
+   but next to near-white text it would not stand out, so a livelier shade is the accent. */
+:root[data-palette="mist"]{
+  --bg:#f3f8f8; --bg-2:#e6f1f2; --bg-3:#d4e8ea;
+  --fg:#142e33; --fg-2:#46636a; --fg-3:#6b8890;
+  --line:#d3e5e7; --line-2:#b5d9dc;
+  --accent:#2f7a82; --accent-soft:#dcedef;
+  --accent-grad:linear-gradient(135deg,#5ea3aa 0%,#2f7a82 100%);
+  --user-bg:#b5d9dc; --user-fg:#142e33;
+  --danger:#c2414b; --ok:#2f8a63;
+  --radius:18px;
+  --glow:rgba(70,140,150,.35);
+  --page:radial-gradient(900px 560px at 0% 0%,rgba(181,217,220,.55),transparent 65%),
+         radial-gradient(900px 620px at 100% 100%,rgba(181,217,220,.35),transparent 65%);
+  --glass:rgba(243,248,248,.72); --glass-side:rgba(230,241,242,.88);
+  --blur:blur(16px) saturate(140%);
+}
+@media (prefers-color-scheme:dark){
+  :root[data-palette="mist"]:not([data-theme="light"]){
+    --bg:#0d1719; --bg-2:#132124; --bg-3:#1b2e32;
+    --fg:#e3f0f1; --fg-2:#a2bcc0; --fg-3:#6f8a8f;
+    --line:#1d3236; --line-2:#2c4a4f;
+    --accent:#7ccfd6; --accent-soft:#1f3a3e; --on-accent:#10292d;
+    --accent-grad:linear-gradient(135deg,#b5d9dc 0%,#6cc6ce 100%);
+    --user-bg:#b5d9dc; --user-fg:#10292d;
+    --danger:#ff8a8a; --ok:#7fd8a8;
+    --glow:rgba(181,217,220,.22);
+    --page:radial-gradient(900px 560px at 0% 0%,rgba(181,217,220,.09),transparent 65%),
+           radial-gradient(900px 620px at 100% 100%,rgba(181,217,220,.06),transparent 65%);
+    --glass:rgba(13,23,25,.72); --glass-side:rgba(19,33,36,.88);
+    --blur:blur(16px) saturate(130%);
+  }
+}
+:root[data-palette="mist"][data-theme="dark"]{
+  --bg:#0d1719; --bg-2:#132124; --bg-3:#1b2e32;
+  --fg:#e3f0f1; --fg-2:#a2bcc0; --fg-3:#6f8a8f;
+  --line:#1d3236; --line-2:#2c4a4f;
+  --accent:#7ccfd6; --accent-soft:#1f3a3e; --on-accent:#10292d;
+  --accent-grad:linear-gradient(135deg,#b5d9dc 0%,#6cc6ce 100%);
+  --user-bg:#b5d9dc; --user-fg:#10292d;
+  --danger:#ff8a8a; --ok:#7fd8a8;
+  --glow:rgba(181,217,220,.22);
+  --page:radial-gradient(900px 560px at 0% 0%,rgba(181,217,220,.09),transparent 65%),
+         radial-gradient(900px 620px at 100% 100%,rgba(181,217,220,.06),transparent 65%);
+  --glass:rgba(13,23,25,.72); --glass-side:rgba(19,33,36,.88);
+  --blur:blur(16px) saturate(130%);
+}
+
+/* touches every newer palette shares — more than a colour swap, so 暖砂 stays out of them */
+:root[data-palette]:not([data-palette="warm"]) .brand,
+:root[data-palette]:not([data-palette="warm"]) #empty .big{background:var(--accent-grad);
+  -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
+:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble{box-shadow:0 8px 22px -12px var(--glow)}
+:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble code{background:rgba(255,255,255,.22)}
+:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble a{color:inherit}
+:root[data-palette]:not([data-palette="warm"]) .bubble blockquote{border-left-color:var(--accent)}
+:root[data-palette]:not([data-palette="warm"]) .conv.active{background:var(--accent-soft);
+  box-shadow:inset 3px 0 0 var(--accent)}
+:root[data-palette]:not([data-palette="warm"]) #cwrap:focus-within{box-shadow:0 0 0 3px var(--accent-soft)}
+:root[data-palette]:not([data-palette="warm"]) #send:not(:disabled){box-shadow:0 4px 14px -4px var(--glow)}
+
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.7 var(--sans);
+body{margin:0;background-color:var(--bg);background-image:var(--page);background-attachment:fixed;color:var(--fg);font:15px/1.7 var(--sans);
   -webkit-font-smoothing:antialiased;overflow:hidden}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
 input,textarea,select{font:inherit;color:inherit}
@@ -55,7 +174,8 @@ input,textarea,select{font:inherit;color:inherit}
 #app{display:flex;height:100dvh;overflow:hidden}
 
 /* sidebar */
-#side{width:250px;flex:0 0 250px;background:var(--bg-2);border-right:1px solid var(--line);
+#side{width:250px;flex:0 0 250px;background:var(--glass-side);border-right:1px solid var(--line);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   display:flex;flex-direction:column;transition:margin-left .22s ease}
 #side.hidden{margin-left:-250px}
 .side-head{padding:14px 12px 10px;display:flex;align-items:center;gap:8px}
@@ -89,7 +209,7 @@ input,textarea,select{font:inherit;color:inherit}
 #main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
 #top{height:var(--topH);flex:0 0 auto;border-bottom:1px solid var(--line);display:flex;
   align-items:center;gap:10px;padding:env(safe-area-inset-top,0px) 14px 0;
-  background:var(--bg);z-index:5}
+  background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);z-index:5}
 .icobtn{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
   color:var(--fg-2);flex:0 0 auto}
 .icobtn:hover{background:var(--bg-3);color:var(--fg)}
@@ -112,7 +232,13 @@ input,textarea,select{font:inherit;color:inherit}
 .msg .who .acts button{font-size:11px;color:var(--fg-3);padding:1px 5px;border-radius:4px}
 .msg .who .acts button:hover{background:var(--bg-3);color:var(--fg)}
 .bubble{border-radius:var(--radius);padding:11px 15px;overflow-wrap:anywhere}
-.msg.user .bubble{background:var(--user-bg);align-self:flex-start;max-width:100%}
+.msg.user .bubble{background:var(--user-bg);color:var(--user-fg);align-self:flex-start;max-width:100%}
+/* “对白” in replies takes the palette's accent; 外观 → 不标 turns it off */
+.msg.ai .bubble .dq,.dq-demo .dq{color:var(--accent)}
+:root[data-dq="off"] .msg.ai .bubble .dq{color:inherit}
+.dq-demo{font-size:14px;line-height:1.75;padding:12px 14px;margin-top:8px;border-radius:11px;
+  background:var(--bg-2);border:1px solid var(--line)}
+:root[data-dq="off"] .dq-demo .dq{color:inherit}
 .msg.ai .bubble{background:var(--ai-bg);padding-left:0;padding-right:0}
 .msg.err .bubble{background:transparent;border:1px solid var(--danger);color:var(--danger);
   font-size:13.5px;font-family:var(--mono);white-space:pre-wrap}
@@ -209,8 +335,8 @@ button.row:active{background:var(--bg-3)}
   color:var(--fg-2);font-size:14.5px;text-align:center;margin-top:16px}
 .sh-btn:hover{background:var(--bg-2);color:var(--fg)}
 .sh-btn.thin{width:auto;padding:11px 16px;margin:0;flex:0 0 auto}
-.sh-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500;margin:0}
-.sh-btn.primary:hover{opacity:.92;background:var(--accent);color:#fff}
+.sh-btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:500;margin:0}
+.sh-btn.primary:hover{opacity:.92;background:var(--accent);color:var(--on-accent)}
 .sh-btn.danger{color:var(--danger);border-color:var(--danger)}
 .sh-btn.danger:hover{background:var(--danger);color:#fff}
 .sh-row2 .sh-btn.thin{flex:1}
@@ -276,15 +402,16 @@ button.row:active{background:var(--bg-3)}
 .edit-row{display:flex;gap:7px;margin-top:8px;align-items:center;flex-wrap:wrap}
 .mini{font-size:12px;padding:5px 12px;border-radius:8px;border:1px solid var(--line-2);color:var(--fg-2)}
 .mini:hover{background:var(--bg-2);color:var(--fg)}
-.mini.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
-.mini.primary:hover{opacity:.9;background:var(--accent);color:#fff}
+.mini.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:500}
+.mini.primary:hover{opacity:.9;background:var(--accent);color:var(--on-accent)}
 .mini.warn{color:var(--danger);border-color:var(--danger)}
 .mini.warn:hover{background:var(--danger);color:#fff}
 .edit-hint{font-size:10.5px;color:var(--fg-3);margin-left:auto;white-space:nowrap}
 @media (max-width:520px){ .edit-hint{display:none} }
 
 /* composer */
-#composer{border-top:1px solid var(--line);background:var(--bg);flex:0 0 auto;
+#composer{border-top:1px solid var(--line);background:var(--glass);flex:0 0 auto;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   padding:12px 20px calc(16px + env(safe-area-inset-bottom,0px))}
 #cwrap{max-width:760px;margin:0 auto;position:relative;border:1px solid var(--line-2);
   border-radius:var(--radius);background:var(--bg-2);transition:border-color .15s}
@@ -292,7 +419,7 @@ button.row:active{background:var(--bg-3)}
 #input{width:100%;background:none;border:none;outline:none;resize:none;padding:13px 52px 13px 15px;
   max-height:200px;min-height:46px;line-height:1.6;display:block;font-size:15px}
 #send{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:9px;
-  background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center}
+  background:var(--accent-grad);color:var(--on-accent);display:flex;align-items:center;justify-content:center}
 #send:disabled{opacity:.3;cursor:default}
 #send svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round}
@@ -351,7 +478,7 @@ button.row:active{background:var(--bg-3)}
 #ctxBar .txt{flex:1;min-width:0}
 #ctxBar button{font-size:11.5px;color:var(--accent);padding:3px 9px;border-radius:7px;
   border:1px solid var(--accent);white-space:nowrap}
-#ctxBar button:hover{background:var(--accent);color:#fff}
+#ctxBar button:hover{background:var(--accent);color:var(--on-accent)}
 #ctxBar .dismiss{color:var(--fg-3);border:none;padding:3px 5px}
 #ctxBar .dismiss:hover{background:var(--bg-3);color:var(--fg)}
 
@@ -408,23 +535,24 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 .row{display:flex;gap:10px}
 .row>*{flex:1;min-width:0}
 /* …but the sheet's grouped rows keep their trailing bits content-sized */
-.row>.chev,.row>.tick,.row>.rv,.row>.mini{flex:0 0 auto}
+.row>.chev,.row>.tick,.row>.rv,.row>.mini,.row>.swatch{flex:0 0 auto}
+.swatch{width:36px;height:36px;border-radius:11px;border:1px solid var(--line-2)}
 .seg{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:10px;
   border:1px solid var(--line-2)}
 .seg button{flex:1;padding:7px;border-radius:7px;font-size:13px;color:var(--fg-2);text-align:center}
-.seg button.on{background:var(--accent);color:#fff;font-weight:500}
+.seg button.on{background:var(--accent);color:var(--on-accent);font-weight:500}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
 .chip{font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);
   color:var(--fg-2);font-family:var(--mono);white-space:nowrap;line-height:1.4}
 .chip:hover{border-color:var(--accent);color:var(--accent)}
-.chip.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500}
+.chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:500}
 .chips .empty{font-size:11.5px;color:var(--fg-3);line-height:1.55}
 .panel-foot{display:flex;gap:9px;margin-top:20px}
 .btn{padding:10px 16px;border-radius:9px;font-size:14px;text-align:center;
   border:1px solid var(--line-2);color:var(--fg-2)}
 .btn:hover{background:var(--bg-2);color:var(--fg)}
-.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:500;flex:1}
-.btn.primary:hover{opacity:.9;background:var(--accent);color:#fff}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:500;flex:1}
+.btn.primary:hover{opacity:.9;background:var(--accent);color:var(--on-accent)}
 .out{font-size:12.5px;font-family:var(--mono);margin-top:9px;padding:9px 11px;
   border-radius:8px;background:var(--bg-2);display:none;white-space:pre-wrap;line-height:1.6}
 .out.on{display:block}
@@ -459,6 +587,7 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 }
 @media (max-width:720px){
   #side{position:absolute;z-index:20;height:100%;box-shadow:2px 0 22px rgba(0,0,0,.18)}
+  #side.hidden{box-shadow:none}       /* parked off-screen, its shadow still bled in at the left edge */
   #msgs{padding:20px 15px 10px}
   #composer{padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
   #modelTag{display:none}
@@ -590,7 +719,21 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
             <div class="rw"><div class="rt">新窗口默认设定</div><div class="rs">新开的窗口照这份来</div></div>
             <span class="chev">›</span>
           </button>
+          <button class="row" id="rowLook">
+            <div class="rw"><div class="rt">外观</div><div class="rs">配色、回复里的对白高亮</div></div>
+            <span class="rv" id="rowLookVal"></span><span class="chev">›</span>
+          </button>
         </div>
+      </section>
+
+      <section class="sh-screen" data-sc="look" hidden>
+        <div class="sh-label">配色</div>
+        <div class="grp" id="grpPal"></div>
+        <div class="sh-note">每套都有浅色、深色两版，跟着侧栏的「主题」按钮走。点一下就换好了。</div>
+
+        <div class="sh-label">回复里的对白（双引号里的话）</div>
+        <div class="grp" id="grpDq"></div>
+        <div class="dq-demo">她抬起头看你：<span class="dq">“今天也辛苦啦。”</span>说完把热茶推了过来，<span class="dq">“先喝口这个。”</span></div>
       </section>
 
       <section class="sh-screen" data-sc="model" hidden>
@@ -738,12 +881,25 @@ const BASE_CFG = {
   dsThink:"auto"     // OpenAI 兼容通道的思考档位: auto(不发送)/off/low/high/max
 };
 const DS_THINK = ["auto","off","low","high","max"];
+// Each palette's colours live in the CSS (data-palette); this list is what 外观 shows.
+// sw = the swatch, meta = the browser bar colour in light / dark.
+const PALETTES = [
+  { id:"warm", name:"暖砂", sub:"原来的那套：米白、陶土", sw:"linear-gradient(135deg,#f0e0d6,#a8654a)",
+    meta:["#faf8f5","#1a1816"] },
+  { id:"tide", name:"潮汐", sub:"青绿到海蓝，清透、大胆", sw:"linear-gradient(135deg,#2ee6c8,#00a39a 40%,#1f6fd6)",
+    meta:["#f3f9f9","#071317"] },
+  { id:"mist", name:"雾青", sub:"以 #b5d9dc 为主，柔和的雾蓝绿", sw:"linear-gradient(135deg,#e6f1f2,#b5d9dc 45%,#2f7a82)",
+    meta:["#f3f8f8","#0d1719"] }
+];
+const palOf = id => PALETTES.find(p=>p.id===id) || PALETTES[0];
 const DEFAULTS = {
   ver:2,
   channels:[],       // {id, name, kind:"anthropic"|"openai", baseURL, key, models:[]}
   winDef:structuredClone(BASE_CFG),
   theme:"auto",
-  sumAt:24,          // suggest compacting once the live context passes this many messages
+  palette:"warm",
+  quoteHi:true,      // colour “对白” in replies with the palette's accent
+  sumAt:24,         // suggest compacting once the live context passes this many messages
   stats:[],          // {t, m:model, p:channel name, i:inTokens, o:outTokens}
   prices:{},         // model -> {in, out}  per 1M tokens, filled in by hand
   convs:[],
@@ -800,6 +956,8 @@ function tidy(s){
   s.winDef = normCfg(s.winDef);
   s.convs = (Array.isArray(s.convs) ? s.convs : []).filter(c=>c && typeof c==="object");
   s.convs.forEach(c=>{ c.cfg = normCfg(c.cfg || s.winDef); });
+  s.palette = palOf(s.palette).id;
+  s.quoteHi = s.quoteHi !== false;
   return s;
 }
 // always returns a fresh object — windows never share one cfg by reference
@@ -895,7 +1053,23 @@ function inlineMd(t){
   t = t.replace(/~~([^~\n]+)~~/g, "<del>$1</del>");
   t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
         '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  return t;
+  return markQuotes(t);
+}
+// “对白” / "dialogue" → <span class="dq">; the CSS decides whether it gets coloured.
+// Runs on finished HTML: tags and inline code are stepped over whole, and a quote that
+// would straddle a tag boundary is left alone rather than break the nesting.
+const DQ_RE = /(<code>[\s\S]*?<\/code>|<[^>]*>)|“[^“”\n]*”|＂[^＂\n]*＂|&quot;(?:(?!&quot;)[^\n])*&quot;/g;
+function markQuotes(h){
+  return h.replace(DQ_RE, (m, skip)=> skip || !tagsBalanced(m) ? m : '<span class="dq">'+m+'</span>');
+}
+function tagsBalanced(s){
+  if(/[<>]/.test(s.replace(/<\/?\w+[^>]*>/g,""))) return false;   // ends inside a tag
+  const open = [];
+  for(const [, close, name] of s.matchAll(/<(\/?)(\w+)[^>]*>/g)){
+    if(!close) open.push(name);
+    else if(open.pop()!==name) return false;
+  }
+  return !open.length;
 }
 
 function md(src){
@@ -1561,6 +1735,21 @@ function paintMain(){
     $("#rowEffortVal").textContent = effortLabel(cfg);
   }
   $("#rowChansVal").textContent = S.channels.length ? S.channels.length+" 条" : "还没有";
+  $("#rowLookVal").textContent = palOf(S.palette).name;
+}
+// 外观 applies on tap — it is global, so there is nothing for 保存 to do
+function paintLook(){
+  const look = (k, v)=>()=>{ S[k] = v; applyTheme(); save(true); paintLook(); };
+  fillGrp($("#grpPal"), PALETTES.map(p=>({ title:p.name, sub:p.sub, sel:p.id===S.palette,
+    on:look("palette", p.id) })));
+  $("#grpPal").querySelectorAll(".row").forEach((row,i)=>{
+    const s = document.createElement("span"); s.className = "swatch";
+    s.style.background = PALETTES[i].sw; row.prepend(s);
+  });
+  fillGrp($("#grpDq"), [
+    { title:"用主题色标出来", sub:"换配色时跟着变", sel:S.quoteHi,  on:look("quoteHi", true) },
+    { title:"不标",                                 sel:!S.quoteHi, on:look("quoteHi", false) }
+  ]);
 }
 function paintDefs(){
   paintModelRow("#dRowModelVal", "#dRowModelSub", S.winDef);
@@ -2058,6 +2247,8 @@ function doImport(file){
       S.convs = [...add, ...S.convs];
       S.winDef = def;                              // restoring a backup restores its settings, as before
       if(j.theme) S.theme = j.theme;
+      if(j.palette) S.palette = palOf(j.palette).id;
+      if(typeof j.quoteHi==="boolean") S.quoteHi = j.quoteHi;
       if(j.sumAt) S.sumAt = j.sumAt;
       if(j.prices) S.prices = Object.assign({}, j.prices, S.prices);
       if(Array.isArray(j.stats)){                    // merge flows, drop exact dupes
@@ -2181,11 +2372,16 @@ function applyTheme(){
   const r=document.documentElement;
   if(S.theme==="auto") r.removeAttribute("data-theme");
   else r.setAttribute("data-theme",S.theme);
+  const p = palOf(S.palette);
+  r.setAttribute("data-palette", p.id);
+  if(S.quoteHi) r.removeAttribute("data-dq"); else r.setAttribute("data-dq","off");
+  // the phone's own status/address bar follows the palette too
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m,i)=>{ m.content = p.meta[i]; });
 }
 // every screen repaints itself when it is shown (also when you come back to it)
 let shStack = [];
 const SH_PAINT = { main:paintMain, model:paintModels, effort:paintEffort,
-                   chans:paintChans, chedit:paintKind, defs:paintDefs };
+                   chans:paintChans, chedit:paintKind, defs:paintDefs, look:paintLook };
 function shShow(){
   const top = shStack[shStack.length-1];
   document.querySelectorAll(".sh-screen").forEach(e=>e.hidden = e.dataset.sc!==top.sc);
@@ -2239,6 +2435,7 @@ $("#dRowModel").onclick  = ()=>goPicker("def","默认模型");
 $("#dRowEffort").onclick = ()=>goEffort("def","默认思考档位");
 $("#rowChans").onclick   = ()=>shGo("chans","通道");
 $("#rowDefs").onclick    = ()=>shGo("defs","新窗口默认设定");
+$("#rowLook").onclick    = ()=>shGo("look","外观");
 $("#btnChAdd").onclick   = ()=>openChEdit(null);
 $("#btnMdlAdd").onclick  = ()=>openChEdit(null);
 $("#btnChModels").onclick = async ()=>{
