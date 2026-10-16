@@ -24,7 +24,8 @@
   --radius:14px;
   --topH:calc(50px + env(safe-area-inset-top, 0px));
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --sans-sys:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --sans:var(--sans-sys);
   /* extras a palette may override — these defaults are exactly the original look */
   --page:none;                  /* wash painted behind the whole app */
   --glass:var(--bg);            /* top bar + composer */
@@ -52,6 +53,15 @@
   --user-bg:#2b261f; --ai-bg:transparent;
   --danger:#d97b6c; --ok:#7fae86;
 }
+
+/* 字体「文泉驿正黑 + Inter」: subsets in fonts/ next to this page (see fonts/README.md),
+   so nothing third-party — and the browser only fetches them once that font is chosen */
+@font-face{font-family:"XC Inter";src:url(fonts/inter-400.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"XC Inter";src:url(fonts/inter-500.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"XC Inter";src:url(fonts/inter-600.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"XC Inter";src:url(fonts/inter-700.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"XC WenQuanYi";src:url(fonts/wqy-zenhei-gb2312.woff2) format("woff2");font-display:swap}
+:root[data-font="wqy"]{--sans:"XC Inter","XC WenQuanYi",var(--sans-sys)}
 
 /* ── palettes: the original above is "warm"; every other one is a block keyed by
    data-palette, light first, then dark for both the system setting and the 主题 button.
@@ -731,6 +741,10 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
         <div class="grp" id="grpPal"></div>
         <div class="sh-note">每套都有浅色、深色两版，跟着侧栏的「主题」按钮走。点一下就换好了。</div>
 
+        <div class="sh-label">字体</div>
+        <div class="grp" id="grpFont"></div>
+        <div class="sh-note">文泉驿正黑 + Inter 第一次用要下载约 1 MB，之后浏览器会存着。很少见的字会退回系统字体。</div>
+
         <div class="sh-label">回复里的对白（双引号里的话）</div>
         <div class="grp" id="grpDq"></div>
         <div class="dq-demo">她抬起头看你：<span class="dq">“今天也辛苦啦。”</span>说完把热茶推了过来，<span class="dq">“先喝口这个。”</span></div>
@@ -892,13 +906,20 @@ const PALETTES = [
     meta:["#f3f8f8","#0d1719"] }
 ];
 const palOf = id => PALETTES.find(p=>p.id===id) || PALETTES[0];
+// "wqy" swaps --sans via data-font; the files sit in fonts/
+const FONTS = [
+  { id:"sys", name:"系统字体", sub:"iPhone 上是苹方" },
+  { id:"wqy", name:"文泉驿正黑 + Inter", sub:"中文文泉驿正黑，英文和数字 Inter" }
+];
+const fontOf = id => FONTS.find(f=>f.id===id) || FONTS[0];
 const DEFAULTS = {
   ver:2,
   channels:[],       // {id, name, kind:"anthropic"|"openai", baseURL, key, models:[]}
   winDef:structuredClone(BASE_CFG),
   theme:"auto",
   palette:"warm",
-  quoteHi:true,      // colour “对白” in replies with the palette's accent
+  font:"sys",
+  quoteHi:true,     // colour “对白” in replies with the palette's accent
   sumAt:24,         // suggest compacting once the live context passes this many messages
   stats:[],          // {t, m:model, p:channel name, i:inTokens, o:outTokens}
   prices:{},         // model -> {in, out}  per 1M tokens, filled in by hand
@@ -957,6 +978,7 @@ function tidy(s){
   s.convs = (Array.isArray(s.convs) ? s.convs : []).filter(c=>c && typeof c==="object");
   s.convs.forEach(c=>{ c.cfg = normCfg(c.cfg || s.winDef); });
   s.palette = palOf(s.palette).id;
+  s.font = fontOf(s.font).id;
   s.quoteHi = s.quoteHi !== false;
   return s;
 }
@@ -1746,6 +1768,7 @@ function paintLook(){
     const s = document.createElement("span"); s.className = "swatch";
     s.style.background = PALETTES[i].sw; row.prepend(s);
   });
+  fillGrp($("#grpFont"), FONTS.map(f=>({ title:f.name, sub:f.sub, sel:f.id===S.font, on:look("font", f.id) })));
   fillGrp($("#grpDq"), [
     { title:"用主题色标出来", sub:"换配色时跟着变", sel:S.quoteHi,  on:look("quoteHi", true) },
     { title:"不标",                                 sel:!S.quoteHi, on:look("quoteHi", false) }
@@ -2248,6 +2271,7 @@ function doImport(file){
       S.winDef = def;                              // restoring a backup restores its settings, as before
       if(j.theme) S.theme = j.theme;
       if(j.palette) S.palette = palOf(j.palette).id;
+      if(j.font) S.font = fontOf(j.font).id;
       if(typeof j.quoteHi==="boolean") S.quoteHi = j.quoteHi;
       if(j.sumAt) S.sumAt = j.sumAt;
       if(j.prices) S.prices = Object.assign({}, j.prices, S.prices);
@@ -2374,6 +2398,7 @@ function applyTheme(){
   else r.setAttribute("data-theme",S.theme);
   const p = palOf(S.palette);
   r.setAttribute("data-palette", p.id);
+  r.setAttribute("data-font", fontOf(S.font).id);
   if(S.quoteHi) r.removeAttribute("data-dq"); else r.setAttribute("data-dq","off");
   // the phone's own status/address bar follows the palette too
   document.querySelectorAll('meta[name="theme-color"]').forEach((m,i)=>{ m.content = p.meta[i]; });
