@@ -101,17 +101,67 @@
   --glass:rgba(7,19,23,.7); --glass-side:rgba(10,26,31,.88);
   --blur:blur(16px) saturate(140%);
 }
-/* tide's few touches that are more than a colour swap */
-:root[data-palette="tide"] .brand,
-:root[data-palette="tide"] #empty .big{background:var(--accent-grad);-webkit-background-clip:text;
-  background-clip:text;color:transparent;font-weight:600}
-:root[data-palette="tide"] .msg.user .bubble{box-shadow:0 8px 22px -12px var(--glow)}
-:root[data-palette="tide"] .msg.user .bubble code{background:rgba(255,255,255,.18)}
-:root[data-palette="tide"] .msg.user .bubble a{color:inherit}
-:root[data-palette="tide"] .bubble blockquote{border-left-color:var(--accent)}
-:root[data-palette="tide"] .conv.active{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
-:root[data-palette="tide"] #cwrap:focus-within{box-shadow:0 0 0 3px var(--accent-soft)}
-:root[data-palette="tide"] #send:not(:disabled){box-shadow:0 4px 14px -4px var(--glow)}
+/* 雾青: built around #b5d9dc. Too pale to read as text on white, so in light it is the
+   bubble, borders and wash, and a deeper shade of it carries text. In dark it is still the bubble,
+   but next to near-white text it would not stand out, so a livelier shade is the accent. */
+:root[data-palette="mist"]{
+  --bg:#f3f8f8; --bg-2:#e6f1f2; --bg-3:#d4e8ea;
+  --fg:#142e33; --fg-2:#46636a; --fg-3:#6b8890;
+  --line:#d3e5e7; --line-2:#b5d9dc;
+  --accent:#2f7a82; --accent-soft:#dcedef;
+  --accent-grad:linear-gradient(135deg,#5ea3aa 0%,#2f7a82 100%);
+  --user-bg:#b5d9dc; --user-fg:#142e33;
+  --danger:#c2414b; --ok:#2f8a63;
+  --radius:18px;
+  --glow:rgba(70,140,150,.35);
+  --page:radial-gradient(900px 560px at 0% 0%,rgba(181,217,220,.55),transparent 65%),
+         radial-gradient(900px 620px at 100% 100%,rgba(181,217,220,.35),transparent 65%);
+  --glass:rgba(243,248,248,.72); --glass-side:rgba(230,241,242,.88);
+  --blur:blur(16px) saturate(140%);
+}
+@media (prefers-color-scheme:dark){
+  :root[data-palette="mist"]:not([data-theme="light"]){
+    --bg:#0d1719; --bg-2:#132124; --bg-3:#1b2e32;
+    --fg:#e3f0f1; --fg-2:#a2bcc0; --fg-3:#6f8a8f;
+    --line:#1d3236; --line-2:#2c4a4f;
+    --accent:#7ccfd6; --accent-soft:#1f3a3e; --on-accent:#10292d;
+    --accent-grad:linear-gradient(135deg,#b5d9dc 0%,#6cc6ce 100%);
+    --user-bg:#b5d9dc; --user-fg:#10292d;
+    --danger:#ff8a8a; --ok:#7fd8a8;
+    --glow:rgba(181,217,220,.22);
+    --page:radial-gradient(900px 560px at 0% 0%,rgba(181,217,220,.09),transparent 65%),
+           radial-gradient(900px 620px at 100% 100%,rgba(181,217,220,.06),transparent 65%);
+    --glass:rgba(13,23,25,.72); --glass-side:rgba(19,33,36,.88);
+    --blur:blur(16px) saturate(130%);
+  }
+}
+:root[data-palette="mist"][data-theme="dark"]{
+  --bg:#0d1719; --bg-2:#132124; --bg-3:#1b2e32;
+  --fg:#e3f0f1; --fg-2:#a2bcc0; --fg-3:#6f8a8f;
+  --line:#1d3236; --line-2:#2c4a4f;
+  --accent:#7ccfd6; --accent-soft:#1f3a3e; --on-accent:#10292d;
+  --accent-grad:linear-gradient(135deg,#b5d9dc 0%,#6cc6ce 100%);
+  --user-bg:#b5d9dc; --user-fg:#10292d;
+  --danger:#ff8a8a; --ok:#7fd8a8;
+  --glow:rgba(181,217,220,.22);
+  --page:radial-gradient(900px 560px at 0% 0%,rgba(181,217,220,.09),transparent 65%),
+         radial-gradient(900px 620px at 100% 100%,rgba(181,217,220,.06),transparent 65%);
+  --glass:rgba(13,23,25,.72); --glass-side:rgba(19,33,36,.88);
+  --blur:blur(16px) saturate(130%);
+}
+
+/* touches every newer palette shares — more than a colour swap, so 暖砂 stays out of them */
+:root[data-palette]:not([data-palette="warm"]) .brand,
+:root[data-palette]:not([data-palette="warm"]) #empty .big{background:var(--accent-grad);
+  -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
+:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble{box-shadow:0 8px 22px -12px var(--glow)}
+:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble code{background:rgba(255,255,255,.22)}
+:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble a{color:inherit}
+:root[data-palette]:not([data-palette="warm"]) .bubble blockquote{border-left-color:var(--accent)}
+:root[data-palette]:not([data-palette="warm"]) .conv.active{background:var(--accent-soft);
+  box-shadow:inset 3px 0 0 var(--accent)}
+:root[data-palette]:not([data-palette="warm"]) #cwrap:focus-within{box-shadow:0 0 0 3px var(--accent-soft)}
+:root[data-palette]:not([data-palette="warm"]) #send:not(:disabled){box-shadow:0 4px 14px -4px var(--glow)}
 
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -837,7 +887,9 @@ const PALETTES = [
   { id:"warm", name:"暖砂", sub:"原来的那套：米白、陶土", sw:"linear-gradient(135deg,#f0e0d6,#a8654a)",
     meta:["#faf8f5","#1a1816"] },
   { id:"tide", name:"潮汐", sub:"青绿到海蓝，清透、大胆", sw:"linear-gradient(135deg,#2ee6c8,#00a39a 40%,#1f6fd6)",
-    meta:["#f3f9f9","#071317"] }
+    meta:["#f3f9f9","#071317"] },
+  { id:"mist", name:"雾青", sub:"以 #b5d9dc 为主，柔和的雾蓝绿", sw:"linear-gradient(135deg,#e6f1f2,#b5d9dc 45%,#2f7a82)",
+    meta:["#f3f8f8","#0d1719"] }
 ];
 const palOf = id => PALETTES.find(p=>p.id===id) || PALETTES[0];
 const DEFAULTS = {
