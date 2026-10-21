@@ -611,6 +611,11 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 .srow label{flex:0 0 72px;font-size:14px;color:var(--fg-2)}
 .srow input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
 .srow .rv{min-width:42px;text-align:right;font-size:12.5px}
+.row.trow{padding:11px 14px;gap:12px}
+.trow label{flex:0 0 72px;font-size:14px;color:var(--fg-2)}
+.tchips{display:flex;gap:12px;flex-wrap:wrap}
+.tchip{width:30px;height:30px;border-radius:50%;flex:0 0 auto;border:1px solid var(--line-2)}
+.tchip.on{box-shadow:0 0 0 2px var(--bg-2),0 0 0 4px var(--fg-2)}
 .tone-dot{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-left:5px;
   border:1px solid var(--line-2)}
 .seg{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:10px;
@@ -989,19 +994,24 @@ const FONTS = [
   { id:"wqy", name:"文泉驿正黑 + Inter", sub:"中文文泉驿正黑，英文和数字 Inter" }
 ];
 const fontOf = id => FONTS.find(f=>f.id===id) || FONTS[0];
-// wallpapers that ship next to the page (walls/); tone = their main colour, worked out once
-// with toneOf() so nothing has to be measured at load. "custom" is the viewer's own photo.
+// wallpapers that ship next to the page (walls/); tones = their main colours, biggest first,
+// worked out once with tonesOf() so nothing has to be measured at load. "custom" is the
+// viewer's own photo.
 const WALLS = [
-  { id:"petal-day",   name:"花瓣 · 白天", url:"walls/petal-day.jpg",   tone:{h:346, s:.53} },
-  { id:"petal-night", name:"花瓣 · 夜里", url:"walls/petal-night.jpg", tone:{h:339, s:.68} }
+  { id:"petal-day",   name:"花瓣 · 白天", url:"walls/petal-day.jpg",   tones:[{h:346, s:.53}] },
+  { id:"petal-night", name:"花瓣 · 夜里", url:"walls/petal-night.jpg", tones:[{h:339, s:.68}] }
 ];
 function normWall(w){
   w = (w && typeof w==="object") ? w : {};
   const n = (v, d, lo, hi)=>{ v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
-  const t = w.mine && w.mine.tone;
-  const mine = w.mine ? { tone: t && Number.isFinite(t.h) && Number.isFinite(t.s) ? {h:t.h, s:t.s} : null } : null;
+  const okT = t=>t && Number.isFinite(t.h) && Number.isFinite(t.s) ? {h:t.h, s:t.s} : null;
+  // v2 keeps all of the photo's main colours; a v1 save kept only the first, so it is measured again
+  const mine = w.mine ? { tones: (Array.isArray(w.mine.tones) ? w.mine.tones : [w.mine.tone]).map(okT).filter(Boolean).slice(0,5),
+                          v: w.mine.v===2 ? 2 : 1 } : null;
   const src = (w.src==="custom" && mine) || WALLS.some(x=>x.id===w.src) ? w.src : "none";
-  return { src, mine, follow: w.follow!==false,
+  const picks = {};                        // wallpaper → which of its colours (0 = the main one)
+  if(w.picks && typeof w.picks==="object") for(const k in w.picks){ const i = w.picks[k]|0; if(i>0 && i<5) picks[k] = i; }
+  return { src, mine, picks, follow: w.follow!==false,
            alpha: n(w.alpha, 30, 0, 100),  // bubble opacity, %
            blur:  n(w.blur, 18, 0, 40),    // glass blur, px
            wblur: n(w.wblur, 0, 0, 30),    // wallpaper blur, px
@@ -1932,10 +1942,11 @@ function paintWall(){
     adj.appendChild(d);
   });
 
-  const tone = wallTone();
+  const tone = wallTone(), tones = wallTones();
   fillGrp($("#grpWallTone"), [
     { title:"跟着壁纸取色", sel:w.follow && !!tone, on:()=>{ S.wall.follow = true; applyWall(); save(true); paintWall(); },
-      sub: tone ? "对白、按钮、气泡都用照片的主色调" : "这张没什么颜色，取不出来，先用配色的" },
+      sub: !tone ? "这张没什么颜色，取不出来，先用配色的"
+         : tones.length>1 ? "对白、按钮、气泡都用照片里的颜色，下面能换" : "对白、按钮、气泡都用照片的主色调" },
     { title:"跟着配色", sub:"用上面选的配色", sel:!(w.follow && tone),
       on:()=>{ S.wall.follow = false; applyWall(); save(true); paintWall(); } }
   ]);
@@ -1943,6 +1954,20 @@ function paintWall(){
     const a = toneAccents(tone), first = $("#grpWallTone .row .rt");
     [a.light, a.dark].forEach(c=>{ const dot = document.createElement("span"); dot.className = "tone-dot";
       dot.style.background = c; first.appendChild(dot); });
+  }
+  if(w.follow && tones.length>1){
+    const cur = Math.min(w.picks[w.src]|0, tones.length-1);
+    const d = document.createElement("div"); d.className = "row trow";
+    d.innerHTML = '<label>换个颜色</label><div class="tchips"></div>';
+    tones.forEach((t, i)=>{
+      const b = document.createElement("button"); b.className = "tchip"+(i===cur ? " on" : "");
+      b.style.background = hsl2hex(t.h, Math.min(.85, Math.max(.5, t.s)), .55);
+      b.setAttribute("aria-label", "第 "+(i+1)+" 个颜色");
+      b.onclick = ()=>{ if(i) S.wall.picks[S.wall.src] = i; else delete S.wall.picks[S.wall.src];
+                        applyWall(); save(true); paintWall(); };
+      d.lastChild.appendChild(b);
+    });
+    $("#grpWallTone .row").after(d);
   }
 }
 function paintDefs(){
@@ -2639,9 +2664,10 @@ function lumOf(hex){
 const contrastOf = (a, b)=>{ const x = lumOf(a), y = lumOf(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); };
 const rgbaOf = (hex, a)=>"rgba("+[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)).join(",")+","+a+")";
 
-// The hue there is most of. Greys, near-black and near-white don't vote; vivid pixels vote more.
-// null when the picture has hardly any colour (a black-and-white photo) — then the palette stays.
-function toneOf(img){
+// The hues there are most of, biggest first: at most 5, at least 30° apart, none under 6% of
+// the biggest. Greys, near-black and near-white don't vote; vivid pixels vote more.
+// [] when the picture has hardly any colour (a black-and-white photo) — then the palette stays.
+function tonesOf(img){
   const N = 48, cv = document.createElement("canvas"); cv.width = cv.height = N;
   const g = cv.getContext("2d", {willReadFrequently:true});
   g.drawImage(img, 0, 0, N, N);
@@ -2652,14 +2678,24 @@ function toneOf(img){
     const w = s*(1-Math.abs(l-.5)), b = Math.floor(h/10)%36;
     bins[b] += w; sat[b] += w*s;
   }
-  const near = b=>[(b+35)%36, b, (b+1)%36];
-  let best = 0, bw = 0;
-  for(let b=0; b<36; b++){ const w = near(b).reduce((t,k)=>t+bins[k], 0); if(w>bw){ bw = w; best = b; } }
-  if(bw < N*N*.01) return null;
-  let x = 0, y = 0, ws = 0, ss = 0;                   // circular mean over the winning bins
-  near(best).forEach(k=>{ const a = (k*10+5)*Math.PI/180;
-    x += Math.cos(a)*bins[k]; y += Math.sin(a)*bins[k]; ws += bins[k]; ss += sat[k]; });
-  return { h: Math.round((Math.atan2(y, x)*180/Math.PI+360)%360), s: +(ss/ws).toFixed(2) };
+  const near = b=>[(b+35)%36, b, (b+1)%36], sm = b=>near(b).reduce((t,k)=>t+bins[k], 0), min = N*N*.01;
+  let peaks = [];
+  for(let b=0; b<36; b++){ const w = sm(b); if(w>=min && w>=sm((b+35)%36) && w>sm((b+1)%36)) peaks.push({b, w}); }
+  if(!peaks.length){                                  // perfectly even hues have no peak: take the top
+    let b = 0; for(let k=1; k<36; k++) if(sm(k)>sm(b)) b = k;
+    if(sm(b)>=min) peaks = [{b, w:sm(b)}];
+  }
+  peaks.sort((p,q)=>q.w-p.w);
+  const out = [];
+  for(const p of peaks){
+    if(out.length===5 || p.w < peaks[0].w*.06) break;
+    let x = 0, y = 0, ws = 0, ss = 0;                 // circular mean over the peak's bins
+    near(p.b).forEach(k=>{ const a = (k*10+5)*Math.PI/180;
+      x += Math.cos(a)*bins[k]; y += Math.sin(a)*bins[k]; ws += bins[k]; ss += sat[k]; });
+    const t = { h: Math.round((Math.atan2(y, x)*180/Math.PI+360)%360), s: +(ss/ws).toFixed(2) };
+    if(out.every(o=>{ const d = Math.abs(o.h-t.h); return Math.min(d, 360-d) >= 30; })) out.push(t);
+  }
+  return out;
 }
 // that hue, made dark enough to read on light glass and light (and vivid) enough on dark glass
 function toneAccents(t){
@@ -2671,8 +2707,19 @@ function toneAccents(t){
 }
 
 let mineURL = "", mineTried = false;    // object URL of the viewer's photo, once read back
-const wallTone = ()=>{ const w = S.wall;
-  return w.src==="custom" ? (w.mine && w.mine.tone) : ((WALLS.find(x=>x.id===w.src)||{}).tone || null); };
+const wallTones = ()=>{ const w = S.wall;
+  return w.src==="custom" ? (w.mine ? w.mine.tones : []) : ((WALLS.find(x=>x.id===w.src)||{}).tones || []); };
+const wallTone = ()=>{ const t = wallTones(); return t[S.wall.picks[S.wall.src]|0] || t[0] || null; };
+// a save from before there were colours to pick from kept only the first: measure the photo again
+function rescanMine(){
+  const img = new Image(); img.src = mineURL;
+  img.decode().then(()=>{
+    if(!S.wall.mine) return;
+    S.wall.mine = { tones: tonesOf(img), v:2 };
+    save(true); applyWall();
+    if(shStack.length && shStack[shStack.length-1].sc==="look") paintWall();
+  }).catch(()=>{});
+}
 function applyWall(){
   const w = S.wall, r = document.documentElement, st = r.style;
   const on = w.src!=="none", tone = wallTone(), follow = on && w.follow && !!tone;
@@ -2697,7 +2744,7 @@ function applyWall(){
   if(mineTried) return;
   mineTried = true;
   wallGet().then(blob=>{
-    if(blob) mineURL = URL.createObjectURL(blob);
+    if(blob){ mineURL = URL.createObjectURL(blob); if(S.wall.mine && S.wall.mine.v!==2) rescanMine(); }
     else{ S.wall.mine = null; if(S.wall.src==="custom") S.wall.src = "none"; save(true); }  // e.g. a restored backup
     applyWall();
   }).catch(()=>{});                       // storage blocked (private mode): just no picture
@@ -2712,20 +2759,22 @@ async function takePhoto(file){
     cv.width = Math.round(img.naturalWidth*k); cv.height = Math.round(img.naturalHeight*k);
     cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
     const blob = await new Promise((ok, no)=>cv.toBlob(b=>b ? ok(b) : no(new Error("压缩失败")), "image/jpeg", .86));
-    return { blob, tone: toneOf(img) };
+    return { blob, tones: tonesOf(img) };
   }finally{ URL.revokeObjectURL(url); }
 }
 async function pickPhoto(file){
   toast("正在处理照片…");
   try{
-    const {blob, tone} = await takePhoto(file);
+    const {blob, tones} = await takePhoto(file);
     await wallPut(blob);
     if(mineURL) URL.revokeObjectURL(mineURL);
     mineURL = URL.createObjectURL(blob); mineTried = true;
-    S.wall.mine = {tone}; S.wall.src = "custom";
+    S.wall.mine = {tones, v:2}; S.wall.src = "custom"; delete S.wall.picks.custom;
     applyWall(); save(true);
     if(shStack.length && shStack[shStack.length-1].sc==="look") paintLook();
-    toast(tone ? "换好了，主题色取自这张照片" : "换好了。这张照片没什么颜色，主题色沿用配色");
+    toast(!tones.length ? "换好了。这张照片没什么颜色，主题色沿用配色"
+        : tones.length>1 ? "换好了。主题色取自这张照片，外观里还能换成它的别的颜色"
+        : "换好了，主题色取自这张照片");
   }catch(e){ toast("这张照片没弄成："+String(e && e.message || e).slice(0,40)); }
 }
 // every screen repaints itself when it is shown (also when you come back to it)
