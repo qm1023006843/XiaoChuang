@@ -160,18 +160,68 @@
   --blur:blur(16px) saturate(130%);
 }
 
-/* touches every newer palette shares — more than a colour swap, so 暖砂 stays out of them */
-:root[data-palette]:not([data-palette="warm"]) .brand,
-:root[data-palette]:not([data-palette="warm"]) #empty .big{background:var(--accent-grad);
+/* touches every newer palette shares — more than a colour swap, so 暖砂 stays out of them
+   (and so does wallpaper mode, which brings its own glass) */
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) .brand,
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) #empty .big{background:var(--accent-grad);
   -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
-:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble{box-shadow:0 8px 22px -12px var(--glow)}
-:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble code{background:rgba(255,255,255,.22)}
-:root[data-palette]:not([data-palette="warm"]) .msg.user .bubble a{color:inherit}
-:root[data-palette]:not([data-palette="warm"]) .bubble blockquote{border-left-color:var(--accent)}
-:root[data-palette]:not([data-palette="warm"]) .conv.active{background:var(--accent-soft);
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) .msg.user .bubble{box-shadow:0 8px 22px -12px var(--glow)}
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) .msg.user .bubble code{background:rgba(255,255,255,.22)}
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) .msg.user .bubble a{color:inherit}
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) .bubble blockquote{border-left-color:var(--accent)}
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) .conv.active{background:var(--accent-soft);
   box-shadow:inset 3px 0 0 var(--accent)}
-:root[data-palette]:not([data-palette="warm"]) #cwrap:focus-within{box-shadow:0 0 0 3px var(--accent-soft)}
-:root[data-palette]:not([data-palette="warm"]) #send:not(:disabled){box-shadow:0 4px 14px -4px var(--glow)}
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) #cwrap:focus-within{box-shadow:0 0 0 3px var(--accent-soft)}
+:root[data-palette]:not([data-palette="warm"]):not([data-wall]) #send:not(:disabled){box-shadow:0 4px 14px -4px var(--glow)}
+
+/* ── wallpaper mode (外观 → 壁纸): a photo behind everything, glass over it. applyWall() sets
+   --wall, --wbl (glass blur), --wwb (wallpaper blur), --wveil (darken / lighten), the glass
+   colours --gl-bg-l/-d and --gl-solid-l/-d, and, when the colours follow the photo, --wh (its hue)
+   and --wacc-l/-d (+ -soft): its hue made readable on light / dark glass. ── */
+:root[data-wall]{--gl-bg:var(--gl-bg-l);--gl-solid:var(--gl-solid-l);
+  --gl-rim:rgba(255,255,255,.7);--gl-shine:rgba(255,255,255,.5);--gl-shadow:rgba(30,10,20,.2);--gl-halo:rgba(255,255,255,.85)}
+:root[data-wall][data-wtone]{--accent:var(--wacc-l);--accent-soft:var(--wacc-l-soft);--accent-grad:var(--accent);
+  --on-accent:#fff;--fg:hsl(var(--wh) 25% 14%);--fg-2:hsl(var(--wh) 14% 32%);--fg-3:hsl(var(--wh) 10% 44%)}
+@media (prefers-color-scheme:dark){
+  :root[data-wall]:not([data-theme="light"]){--gl-bg:var(--gl-bg-d);--gl-solid:var(--gl-solid-d);
+    --gl-rim:rgba(255,255,255,.18);--gl-shine:rgba(255,255,255,.13);--gl-shadow:rgba(0,0,0,.55);--gl-halo:rgba(0,0,0,.75)}
+  :root[data-wall][data-wtone]:not([data-theme="light"]){--accent:var(--wacc-d);--accent-soft:var(--wacc-d-soft);
+    --on-accent:hsl(var(--wh) 40% 12%);--fg:hsl(var(--wh) 25% 93%);--fg-2:hsl(var(--wh) 14% 76%);--fg-3:hsl(var(--wh) 10% 62%)}
+}
+:root[data-wall][data-theme="dark"]{--gl-bg:var(--gl-bg-d);--gl-solid:var(--gl-solid-d);
+  --gl-rim:rgba(255,255,255,.18);--gl-shine:rgba(255,255,255,.13);--gl-shadow:rgba(0,0,0,.55);--gl-halo:rgba(0,0,0,.75)}
+:root[data-wall][data-wtone][data-theme="dark"]{--accent:var(--wacc-d);--accent-soft:var(--wacc-d-soft);
+  --on-accent:hsl(var(--wh) 40% 12%);--fg:hsl(var(--wh) 25% 93%);--fg-2:hsl(var(--wh) 14% 76%);--fg-3:hsl(var(--wh) 10% 62%)}
+
+:root[data-wall] body{background:var(--bg)}
+:root[data-wall] body::before{content:"";position:fixed;z-index:0;pointer-events:none;
+  inset:calc(var(--wwb,0px) * -2);background:var(--wall,none) center/cover no-repeat;filter:blur(var(--wwb,0px))}
+:root[data-wall] body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:var(--wveil,transparent)}
+:root[data-wall] #app{position:relative;z-index:1}
+:root[data-wall] #top,:root[data-wall] #composer{background:transparent;border-color:transparent;
+  backdrop-filter:none;-webkit-backdrop-filter:none}
+:root[data-wall] #side{background:var(--gl-solid);backdrop-filter:blur(24px) saturate(160%);
+  -webkit-backdrop-filter:blur(24px) saturate(160%)}
+:root[data-wall] .msg:not(.err) .bubble,:root[data-wall] #cwrap,:root[data-wall] #title,:root[data-wall] .icobtn,
+:root[data-wall] .bic,:root[data-wall] .think,:root[data-wall] .sumcard,:root[data-wall] #ctxBar{
+  background:linear-gradient(165deg,var(--gl-shine),transparent 38%),var(--gl-bg);border:1px solid var(--gl-rim);
+  backdrop-filter:blur(var(--wbl,18px)) saturate(170%);-webkit-backdrop-filter:blur(var(--wbl,18px)) saturate(170%);
+  box-shadow:inset 0 1px 0 var(--gl-shine),0 12px 30px -16px var(--gl-shadow)}
+:root[data-wall] .bic.lit,:root[data-wall] .msg.user .bubble{
+  background:linear-gradient(165deg,var(--gl-shine),transparent 38%),linear-gradient(var(--accent-soft),var(--accent-soft)),var(--gl-bg)}
+:root[data-wall] .bic.lit{border-color:var(--accent)}
+:root[data-wall] #cwrap:focus-within{border-color:var(--accent)}
+:root[data-wall] .bubble{border-radius:22px}
+:root[data-wall] .msg.ai .bubble{padding:12px 16px}
+:root[data-wall] .msg.user .bubble{color:var(--fg);align-self:flex-end}
+:root[data-wall] .msg.user .who{align-self:flex-end}
+:root[data-wall] #cwrap{border-radius:24px}
+:root[data-wall] #title{flex:0 1 auto;margin:0 auto;border-radius:99px;padding:5px 16px;font-weight:600}
+:root[data-wall] .icobtn{border-radius:99px;width:36px;height:36px}
+:root[data-wall] .bubble code,:root[data-wall] .bubble pre{background:rgba(255,255,255,.16)}
+/* words that sit straight on the photo get a soft halo so a busy wallpaper can't swallow them */
+:root[data-wall] .msg .who,:root[data-wall] .usage,:root[data-wall] .cutnote,:root[data-wall] .sumline,
+:root[data-wall] #hint,:root[data-wall] #empty,:root[data-wall] #storeBar{text-shadow:0 0 6px var(--gl-halo),0 0 2px var(--gl-halo)}
 
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -549,7 +599,14 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 .row>*{flex:1;min-width:0}
 /* …but the sheet's grouped rows keep their trailing bits content-sized */
 .row>.chev,.row>.tick,.row>.rv,.row>.mini,.row>.swatch{flex:0 0 auto}
-.swatch{width:36px;height:36px;border-radius:11px;border:1px solid var(--line-2)}
+.swatch{width:36px;height:36px;border-radius:11px;border:1px solid var(--line-2);
+  background-size:cover;background-position:center}
+.row.srow{padding:10px 14px;gap:12px}
+.srow label{flex:0 0 72px;font-size:14px;color:var(--fg-2)}
+.srow input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.srow .rv{min-width:42px;text-align:right;font-size:12.5px}
+.tone-dot{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-left:5px;
+  border:1px solid var(--line-2)}
 .seg{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:10px;
   border:1px solid var(--line-2)}
 .seg button{flex:1;padding:7px;border-radius:7px;font-size:13px;color:var(--fg-2);text-align:center}
@@ -748,6 +805,16 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
         <div class="grp" id="grpFont"></div>
         <div class="sh-note">文泉驿正黑 + Inter 第一次用要下载约 1 MB，之后浏览器会存着。很少见的字会退回系统字体。</div>
 
+        <div class="sh-label">壁纸</div>
+        <div class="grp" id="grpWall"></div>
+        <div class="sh-note">照片会缩小后存在这台手机的浏览器里，不上传，导出备份也不带它。</div>
+        <div id="wallMore">
+          <div class="sh-label">壁纸和气泡</div>
+          <div class="grp" id="grpWallAdj"></div>
+          <div class="sh-label">主题色</div>
+          <div class="grp" id="grpWallTone"></div>
+        </div>
+
         <div class="sh-label">回复里的对白（双引号里的话）</div>
         <div class="grp" id="grpDq"></div>
         <div class="dq-demo">她抬起头看你：<span class="dq">“今天也辛苦啦。”</span>说完把热茶推了过来，<span class="dq">“先喝口这个。”</span></div>
@@ -849,6 +916,7 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 <div id="pop" hidden></div>
 <div id="toast"></div>
 <input type="file" id="fileIn" accept="application/json,.json" style="display:none">
+<input type="file" id="wallIn" accept="image/*" style="display:none">
 
 <script>
 "use strict";
@@ -915,6 +983,24 @@ const FONTS = [
   { id:"wqy", name:"文泉驿正黑 + Inter", sub:"中文文泉驿正黑，英文和数字 Inter" }
 ];
 const fontOf = id => FONTS.find(f=>f.id===id) || FONTS[0];
+// wallpapers that ship next to the page (walls/); tone = their main colour, worked out once
+// with toneOf() so nothing has to be measured at load. "custom" is the viewer's own photo.
+const WALLS = [
+  { id:"petal-day",   name:"花瓣 · 白天", url:"walls/petal-day.jpg",   tone:{h:346, s:.53} },
+  { id:"petal-night", name:"花瓣 · 夜里", url:"walls/petal-night.jpg", tone:{h:339, s:.68} }
+];
+function normWall(w){
+  w = (w && typeof w==="object") ? w : {};
+  const n = (v, d, lo, hi)=>{ v = Number(v); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+  const t = w.mine && w.mine.tone;
+  const mine = w.mine ? { tone: t && Number.isFinite(t.h) && Number.isFinite(t.s) ? {h:t.h, s:t.s} : null } : null;
+  const src = (w.src==="custom" && mine) || WALLS.some(x=>x.id===w.src) ? w.src : "none";
+  return { src, mine, follow: w.follow!==false,
+           alpha: n(w.alpha, 30, 0, 100),  // bubble opacity, %
+           blur:  n(w.blur, 18, 0, 40),    // glass blur, px
+           wblur: n(w.wblur, 0, 0, 30),    // wallpaper blur, px
+           dim:   n(w.dim, 0, -60, 60) };  // <0 darker, >0 lighter
+}
 const DEFAULTS = {
   ver:2,
   channels:[],       // {id, name, kind:"anthropic"|"openai", baseURL, key, models:[]}
@@ -922,7 +1008,8 @@ const DEFAULTS = {
   theme:"auto",
   palette:"warm",
   font:"sys",
-  quoteHi:true,     // colour “对白” in replies with the palette's accent
+  wall:normWall(),
+  quoteHi:true,    // colour “对白” in replies with the palette's accent
   sumAt:24,         // suggest compacting once the live context passes this many messages
   stats:[],          // {t, m:model, p:channel name, i:inTokens, o:outTokens}
   prices:{},         // model -> {in, out}  per 1M tokens, filled in by hand
@@ -982,6 +1069,7 @@ function tidy(s){
   s.convs.forEach(c=>{ c.cfg = normCfg(c.cfg || s.winDef); });
   s.palette = palOf(s.palette).id;
   s.font = fontOf(s.font).id;
+  s.wall = normWall(s.wall);
   s.quoteHi = s.quoteHi !== false;
   return s;
 }
@@ -1797,10 +1885,59 @@ function paintLook(){
     s.style.background = PALETTES[i].sw; row.prepend(s);
   });
   fillGrp($("#grpFont"), FONTS.map(f=>({ title:f.name, sub:f.sub, sel:f.id===S.font, on:look("font", f.id) })));
+  paintWall();
   fillGrp($("#grpDq"), [
     { title:"用主题色标出来", sub:"换配色时跟着变", sel:S.quoteHi,  on:look("quoteHi", true) },
     { title:"不标",                                 sel:!S.quoteHi, on:look("quoteHi", false) }
   ]);
+}
+function paintWall(){
+  const w = S.wall;
+  const use = src=>()=>{ S.wall.src = src; applyWall(); save(true); paintWall(); };
+  const rows = [{ title:"不用壁纸", sub:"回到配色本来的底色", sel:w.src==="none", on:use("none"), thumb:"none" },
+    ...WALLS.map(p=>({ title:p.name, sub:"小窗自带", sel:w.src===p.id, on:use(p.id), thumb:'url("'+p.url+'")' }))];
+  if(w.mine) rows.push({ title:"我的照片", sub: w.src==="custom" ? "正在用" : "点一下用回它",
+    sel:w.src==="custom", on:use("custom"), thumb: mineURL ? 'url("'+mineURL+'")' : "none" });
+  rows.push({ title: w.mine ? "换一张照片…" : "从相册选一张…", sub:"太大的照片会自动缩小", chev:true,
+    on:()=>$("#wallIn").click() });
+  fillGrp($("#grpWall"), rows);
+  $("#grpWall").querySelectorAll(".row").forEach((row,i)=>{
+    if(!rows[i].thumb) return;
+    const s = document.createElement("span"); s.className = "swatch";
+    s.style.background = rows[i].thumb==="none" ? "var(--bg)" : rows[i].thumb+" center/cover";
+    row.prepend(s);
+  });
+
+  $("#wallMore").hidden = w.src==="none";
+  if(w.src==="none") return;
+  // sliders apply live; the save is debounced so dragging doesn't hammer storage
+  const adj = $("#grpWallAdj"); adj.innerHTML = "";
+  [["气泡浓淡", "alpha", 0, 100, v=>v+"%"],
+   ["毛玻璃",   "blur",  0, 40,  v=>v ? v+"px" : "关"],
+   ["壁纸模糊", "wblur", 0, 30,  v=>v ? v+"px" : "不糊"],
+   ["壁纸明暗", "dim", -60, 60,  v=>v<0 ? "暗 "+(-v) : v>0 ? "亮 "+v : "原样"]
+  ].forEach(([label, key, min, max, fmt])=>{
+    const d = document.createElement("div"); d.className = "row srow";
+    d.innerHTML = '<label></label><input type="range" step="1"><span class="rv"></span>';
+    const [lb, inp, out] = d.children;
+    lb.textContent = label; inp.min = min; inp.max = max; inp.value = w[key]; out.textContent = fmt(w[key]);
+    inp.setAttribute("aria-label", label);
+    inp.oninput = ()=>{ S.wall[key] = +inp.value; out.textContent = fmt(S.wall[key]); applyWall(); save(); };
+    adj.appendChild(d);
+  });
+
+  const tone = wallTone();
+  fillGrp($("#grpWallTone"), [
+    { title:"跟着壁纸取色", sel:w.follow && !!tone, on:()=>{ S.wall.follow = true; applyWall(); save(true); paintWall(); },
+      sub: tone ? "对白、按钮、气泡都用照片的主色调" : "这张没什么颜色，取不出来，先用配色的" },
+    { title:"跟着配色", sub:"用上面选的配色", sel:!(w.follow && tone),
+      on:()=>{ S.wall.follow = false; applyWall(); save(true); paintWall(); } }
+  ]);
+  if(tone){
+    const a = toneAccents(tone), first = $("#grpWallTone .row .rt");
+    [a.light, a.dark].forEach(c=>{ const dot = document.createElement("span"); dot.className = "tone-dot";
+      dot.style.background = c; first.appendChild(dot); });
+  }
 }
 function paintDefs(){
   paintModelRow("#dRowModelVal", "#dRowModelSub", S.winDef);
@@ -2324,6 +2461,8 @@ function doImport(file){
       if(j.theme) S.theme = j.theme;
       if(j.palette) S.palette = palOf(j.palette).id;
       if(j.font) S.font = fontOf(j.font).id;
+      // the photo itself never travels in a backup; if it isn't on this device, applyWall drops it
+      if(j.wall) S.wall = normWall(j.wall);
       if(typeof j.quoteHi==="boolean") S.quoteHi = j.quoteHi;
       if(j.sumAt) S.sumAt = j.sumAt;
       if(j.prices) S.prices = Object.assign({}, j.prices, S.prices);
@@ -2454,6 +2593,134 @@ function applyTheme(){
   if(S.quoteHi) r.removeAttribute("data-dq"); else r.setAttribute("data-dq","off");
   // the phone's own status/address bar follows the palette too
   document.querySelectorAll('meta[name="theme-color"]').forEach((m,i)=>{ m.content = p.meta[i]; });
+  applyWall();
+}
+
+/* ============ wallpaper ============ */
+// The viewer's own photo would crowd the 5 MB localStorage every chat lives in, so it goes to
+// IndexedDB; S.wall only remembers that it exists (mine) and what colour it is.
+function wallStore(mode, fn){
+  return new Promise((ok, no)=>{
+    const o = indexedDB.open("xiaochuang-wall", 1);
+    o.onupgradeneeded = ()=>o.result.createObjectStore("kv");
+    o.onerror = ()=>no(o.error);
+    o.onsuccess = ()=>{
+      const db = o.result, tx = db.transaction("kv", mode), q = fn(tx.objectStore("kv"));
+      tx.oncomplete = ()=>{ db.close(); ok(q.result); };
+      tx.onerror = tx.onabort = ()=>{ db.close(); no(tx.error); };
+    };
+  });
+}
+const wallGet = ()=>wallStore("readonly",  s=>s.get("img"));
+const wallPut = b =>wallStore("readwrite", s=>s.put(b, "img"));
+
+function rgb2hsl(r, g, b){
+  r/=255; g/=255; b/=255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), l = (mx+mn)/2, d = mx-mn;
+  if(!d) return [0, 0, l];
+  const h = mx===r ? ((g-b)/d+6)%6 : mx===g ? (b-r)/d+2 : (r-g)/d+4;
+  return [h*60, d/(1-Math.abs(2*l-1)), l];
+}
+function hsl2hex(h, s, l){
+  const a = s*Math.min(l, 1-l);
+  const f = n=>{ const k = (n+h/30)%12; return Math.round(255*(l - a*Math.max(-1, Math.min(k-3, 9-k, 1)))); };
+  return "#"+[f(0), f(8), f(4)].map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+function lumOf(hex){
+  const c = [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.03928 ? v/12.92 : ((v+.055)/1.055)**2.4);
+  return .2126*c[0] + .7152*c[1] + .0722*c[2];
+}
+const contrastOf = (a, b)=>{ const x = lumOf(a), y = lumOf(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); };
+const rgbaOf = (hex, a)=>"rgba("+[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)).join(",")+","+a+")";
+
+// The hue there is most of. Greys, near-black and near-white don't vote; vivid pixels vote more.
+// null when the picture has hardly any colour (a black-and-white photo) — then the palette stays.
+function toneOf(img){
+  const N = 48, cv = document.createElement("canvas"); cv.width = cv.height = N;
+  const g = cv.getContext("2d", {willReadFrequently:true});
+  g.drawImage(img, 0, 0, N, N);
+  const px = g.getImageData(0, 0, N, N).data, bins = new Array(36).fill(0), sat = new Array(36).fill(0);
+  for(let i=0; i<px.length; i+=4){
+    const [h, s, l] = rgb2hsl(px[i], px[i+1], px[i+2]);
+    if(s<.15 || l<.08 || l>.94) continue;
+    const w = s*(1-Math.abs(l-.5)), b = Math.floor(h/10)%36;
+    bins[b] += w; sat[b] += w*s;
+  }
+  const near = b=>[(b+35)%36, b, (b+1)%36];
+  let best = 0, bw = 0;
+  for(let b=0; b<36; b++){ const w = near(b).reduce((t,k)=>t+bins[k], 0); if(w>bw){ bw = w; best = b; } }
+  if(bw < N*N*.01) return null;
+  let x = 0, y = 0, ws = 0, ss = 0;                   // circular mean over the winning bins
+  near(best).forEach(k=>{ const a = (k*10+5)*Math.PI/180;
+    x += Math.cos(a)*bins[k]; y += Math.sin(a)*bins[k]; ws += bins[k]; ss += sat[k]; });
+  return { h: Math.round((Math.atan2(y, x)*180/Math.PI+360)%360), s: +(ss/ws).toFixed(2) };
+}
+// that hue, made dark enough to read on light glass and light (and vivid) enough on dark glass
+function toneAccents(t){
+  const sl = Math.min(.8, Math.max(.5, t.s)), sd = Math.min(.9, Math.max(.6, t.s));
+  const bgL = hsl2hex(t.h, .4, .97), bgD = hsl2hex(t.h, .3, .09);
+  let l = .5;  while(l>.15 && contrastOf(hsl2hex(t.h, sl, l), bgL) < 4.8) l -= .01;
+  let d = .6;  while(d<.85 && contrastOf(hsl2hex(t.h, sd, d), bgD) < 7)   d += .01;
+  return { light: hsl2hex(t.h, sl, l), dark: hsl2hex(t.h, sd, d) };
+}
+
+let mineURL = "", mineTried = false;    // object URL of the viewer's photo, once read back
+const wallTone = ()=>{ const w = S.wall;
+  return w.src==="custom" ? (w.mine && w.mine.tone) : ((WALLS.find(x=>x.id===w.src)||{}).tone || null); };
+function applyWall(){
+  const w = S.wall, r = document.documentElement, st = r.style;
+  const on = w.src!=="none", tone = wallTone(), follow = on && w.follow && !!tone;
+  r.toggleAttribute("data-wall", on);
+  r.toggleAttribute("data-wtone", follow);
+  if(!on) return;
+  st.setProperty("--wbl", w.blur+"px");
+  st.setProperty("--wwb", w.wblur+"px");
+  st.setProperty("--wveil", w.dim<0 ? "rgba(0,0,0,"+(-w.dim/100)+")" : "rgba(255,255,255,"+(w.dim/100)+")");
+  const glL = follow ? hsl2hex(tone.h, .4, .98) : "#ffffff", glD = follow ? hsl2hex(tone.h, .3, .09) : "#141414";
+  st.setProperty("--gl-bg-l", rgbaOf(glL, w.alpha/100));    st.setProperty("--gl-bg-d", rgbaOf(glD, w.alpha/100));
+  st.setProperty("--gl-solid-l", rgbaOf(glL, .86));         st.setProperty("--gl-solid-d", rgbaOf(glD, .88));
+  if(follow){
+    const a = toneAccents(tone);
+    st.setProperty("--wh", tone.h);
+    st.setProperty("--wacc-l", a.light); st.setProperty("--wacc-l-soft", rgbaOf(a.light, .16));
+    st.setProperty("--wacc-d", a.dark);  st.setProperty("--wacc-d-soft", rgbaOf(a.dark, .16));
+  }
+  if(w.src!=="custom") return st.setProperty("--wall", 'url("'+WALLS.find(x=>x.id===w.src).url+'")');
+  if(mineURL) return st.setProperty("--wall", 'url("'+mineURL+'")');
+  st.removeProperty("--wall");
+  if(mineTried) return;
+  mineTried = true;
+  wallGet().then(blob=>{
+    if(blob) mineURL = URL.createObjectURL(blob);
+    else{ S.wall.mine = null; if(S.wall.src==="custom") S.wall.src = "none"; save(true); }  // e.g. a restored backup
+    applyWall();
+  }).catch(()=>{});                       // storage blocked (private mode): just no picture
+}
+// a photo straight off the phone is huge — keep at most 2000 px on the long side
+async function takePhoto(file){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = new Image(); img.src = url; await img.decode();
+    const k = Math.min(1, 2000/Math.max(img.naturalWidth, img.naturalHeight));
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(img.naturalWidth*k); cv.height = Math.round(img.naturalHeight*k);
+    cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+    const blob = await new Promise((ok, no)=>cv.toBlob(b=>b ? ok(b) : no(new Error("压缩失败")), "image/jpeg", .86));
+    return { blob, tone: toneOf(img) };
+  }finally{ URL.revokeObjectURL(url); }
+}
+async function pickPhoto(file){
+  toast("正在处理照片…");
+  try{
+    const {blob, tone} = await takePhoto(file);
+    await wallPut(blob);
+    if(mineURL) URL.revokeObjectURL(mineURL);
+    mineURL = URL.createObjectURL(blob); mineTried = true;
+    S.wall.mine = {tone}; S.wall.src = "custom";
+    applyWall(); save(true);
+    if(shStack.length && shStack[shStack.length-1].sc==="look") paintLook();
+    toast(tone ? "换好了，主题色取自这张照片" : "换好了。这张照片没什么颜色，主题色沿用配色");
+  }catch(e){ toast("这张照片没弄成："+String(e && e.message || e).slice(0,40)); }
 }
 // every screen repaints itself when it is shown (also when you come back to it)
 let shStack = [];
@@ -2513,6 +2780,7 @@ $("#dRowEffort").onclick = ()=>goEffort("def","默认思考档位");
 $("#rowChans").onclick   = ()=>shGo("chans","通道");
 $("#rowDefs").onclick    = ()=>shGo("defs","新窗口默认设定");
 $("#rowLook").onclick    = ()=>shGo("look","外观");
+$("#wallIn").onchange    = e=>{ const f = e.target.files[0]; e.target.value = ""; if(f) pickPhoto(f); };
 $("#btnChAdd").onclick   = ()=>openChEdit(null);
 $("#btnMdlAdd").onclick  = ()=>openChEdit(null);
 $("#btnChModels").onclick = async ()=>{
