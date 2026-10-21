@@ -193,11 +193,17 @@
 :root[data-wall][data-wtone][data-theme="dark"]{--accent:var(--wacc-d);--accent-soft:var(--wacc-d-soft);
   --on-accent:hsl(var(--wh) 40% 12%);--fg:hsl(var(--wh) 25% 93%);--fg-2:hsl(var(--wh) 14% 76%);--fg-3:hsl(var(--wh) 10% 62%)}
 
+/* Safari's glass only blurs what is in its own stacking context, so the photo has to live
+   inside #app's (behind everything in it), and nothing between it and the glass may open
+   another one — hence #top giving up its z-index here. */
 :root[data-wall] body{background:var(--bg)}
-:root[data-wall] body::before{content:"";position:fixed;z-index:0;pointer-events:none;
+:root[data-wall] #app{position:relative;z-index:0}
+:root[data-wall] #app::before{content:"";position:fixed;z-index:-1;pointer-events:none;
   inset:calc(var(--wwb,0px) * -2);background:var(--wall,none) center/cover no-repeat;filter:blur(var(--wwb,0px))}
-:root[data-wall] body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:var(--wveil,transparent)}
-:root[data-wall] #app{position:relative;z-index:1}
+:root[data-wall] #app::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--wveil,transparent)}
+:root[data-wall] #top{z-index:auto}
+:root[data-wall] .msg.folded{opacity:1}           /* opacity would open one too: fade the parts instead */
+:root[data-wall] .msg.folded>*{opacity:.42}
 :root[data-wall] #top,:root[data-wall] #composer{background:transparent;border-color:transparent;
   backdrop-filter:none;-webkit-backdrop-filter:none}
 :root[data-wall] #side{background:var(--gl-solid);backdrop-filter:blur(24px) saturate(160%);
