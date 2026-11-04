@@ -972,11 +972,13 @@ const BASE_CFG = {
   system:"",
   maxTokens:4096,
   ctxLimit:40,
-  thinkOn:false,     // Anthropic 通道的思考开关 + 预算
+  thinkOn:false,     // Anthropic 通道·老模型（4.5 及以前）的思考开关 + 预算
   thinkBudget:4000,
+  effort:"auto",     // Anthropic 通道·新模型（4.6 及以后）的思考力度: auto(不发送)/low/medium/high/max
   dsThink:"auto"     // OpenAI 兼容通道的思考档位: auto(不发送)/off/low/high/max
 };
 const DS_THINK = ["auto","off","low","high","max"];
+const EFFORTS  = ["auto","low","medium","high","max"];
 // Each palette's colours live in the CSS (data-palette); this list is what 外观 shows.
 // sw = the swatch, meta = the browser bar colour in light / dark.
 const PALETTES = [
@@ -1101,6 +1103,10 @@ function normCfg(o){
     ctxLimit: Math.max(2, num(o.ctxLimit, BASE_CFG.ctxLimit)),
     thinkOn: !!o.thinkOn,
     thinkBudget: Math.max(1024, num(o.thinkBudget, BASE_CFG.thinkBudget)),
+    // windows saved before 力度 existed: a switched-on budget becomes the nearest level
+    effort: EFFORTS.includes(o.effort) ? o.effort
+          : !o.thinkOn ? "auto"
+          : num(o.thinkBudget, 0) < 4000 ? "low" : num(o.thinkBudget, 0) < 12000 ? "medium" : "high",
     dsThink: DS_THINK.includes(o.dsThink) ? o.dsThink : "auto"
   };
 }
@@ -1572,7 +1578,7 @@ async function compact(){
   toast("正在压缩，等模型写完摘要…");
   try{
     const r = await callAPI(ctx, [{role:"user",content:ask}],
-                            {system:"", noThink:true, maxTokens:1500, stream:false});
+                            {system:"", noThink:true, noCache:true, maxTokens:1500, stream:false});
     if(!r.text.trim()) throw new Error("摘要是空的");
     c.summary  = r.text.trim();
     c.archived = c.msgs.indexOf(oldOnes[oldOnes.length-1]) + 1;
@@ -1661,7 +1667,8 @@ function msgEl(m, idx){
 const DS_LABEL = {auto:"由模型定", off:"关", low:"低", high:"高", max:"最大"};
 function paintPill(){
   const cfg = curCfg(), kind = kindOf(cfg), b = $("#bThink");
-  const lit = kind==="anthropic" ? cfg.thinkOn
+  const lit = kind==="anthropic"
+              ? (anthStyle(cfg.model)==="adaptive" ? cfg.effort!=="auto" : cfg.thinkOn)
             : kind==="openai" ? (cfg.dsThink!=="auto" && cfg.dsThink!=="off") : false;
   b.classList.toggle("lit", lit);
   $("#bThinkTxt").textContent = effortLabel(cfg);
@@ -1694,7 +1701,7 @@ function popEffort(pop){
     n.textContent = "这个窗口还没选模型。思考档位跟着通道走，先点右边的模型按钮挑一个。";
     pop.appendChild(n); return;
   }
-  const items = kind==="anthropic" ? EFFORT_ANTH : EFFORT_DS;
+  const items = effortLadder(cfg, kind);
   const cur = effortCur(cfg, kind);
   items.forEach(e=>{
     const b=document.createElement("button"); b.className="pi"+(e.v===cur?" on":"");
@@ -1764,11 +1771,20 @@ const MODEL_NOTE = {
 };
 const modelNote = id => MODEL_NOTE[id] || "";
 
+// Claude 4.5 and older: thinking is a switch plus a token budget
 const EFFORT_ANTH = [
   {v:"off",   t:"关",   s:"不思考，最省"},
   {v:"2048",  t:"低",   s:"预算 2k，轻量推敲"},
   {v:"6000",  t:"高",   s:"预算 6k，日常够用"},
   {v:"16000", t:"最大", s:"预算 16k，留给真要动脑子的", w:1}
+];
+// Claude 4.6 and newer: an effort level instead (Opus 5.5 can't switch thinking off at all)
+const EFFORT_ADAPT = [
+  {v:"auto",   t:"由模型定", s:"不发送参数，随模型默认。Opus 5.5 默认是「中」"},
+  {v:"low",    t:"低",      s:"想得最少，最省。聊天、写对白一般够用"},
+  {v:"medium", t:"中",      s:"日常够用"},
+  {v:"high",   t:"高",      s:"多想一些。推情节、理前后线索时用"},
+  {v:"max",    t:"最大",    s:"最贵，留给真要动脑子的", w:1}
 ];
 const EFFORT_DS = [
   {v:"auto", t:"由模型定", s:"不发送参数，随服务端默认"},
@@ -1814,20 +1830,42 @@ function noteRow(txt, cls){
   return d;
 }
 
+/* ── which thinking switch a Claude model takes, read off its id ──
+   adaptive: Claude 4.6 and newer (Opus 5.5 among them) — an effort level decides how much
+             it thinks. budget_tokens is a 400 from 4.7 on.
+   budget:   4.5 and older — thinking:{type:"enabled", budget_tokens}. */
+function claudeVer(model){
+  const m = String(model||"").toLowerCase()
+    .match(/claude-(opus|sonnet|haiku|fable|mythos)-(\d+)(?:-(\d{1,2})(?!\d))?/);
+  return m ? { fam:m[1], v: +m[2] + (m[3] ? +m[3]/10 : 0) } : null;
+}
+function anthStyle(model){
+  const c = claudeVer(model);
+  return c && (c.fam==="fable" || c.fam==="mythos" || c.v >= 4.6) ? "adaptive" : "budget";
+}
+
 /* ── thinking effort, per cfg (its channel decides which ladder applies) ── */
+function effortLadder(cfg, kind){
+  if(kind!=="anthropic") return EFFORT_DS;
+  return anthStyle(cfg.model)==="adaptive" ? EFFORT_ADAPT : EFFORT_ANTH;
+}
 function effortCur(cfg, kind){
-  return kind==="anthropic" ? (cfg.thinkOn ? String(cfg.thinkBudget) : "off") : cfg.dsThink;
+  if(kind!=="anthropic") return cfg.dsThink;
+  if(anthStyle(cfg.model)==="adaptive") return cfg.effort;
+  return cfg.thinkOn ? String(cfg.thinkBudget) : "off";
 }
 function setEffort(cfg, kind, v){
-  if(kind==="anthropic"){
-    if(v==="off") cfg.thinkOn = false;
-    else { cfg.thinkOn = true; cfg.thinkBudget = parseInt(v); }
-  } else cfg.dsThink = v;
+  if(kind!=="anthropic"){ cfg.dsThink = v; return; }
+  if(anthStyle(cfg.model)==="adaptive"){ cfg.effort = v; return; }
+  if(v==="off") cfg.thinkOn = false;
+  else { cfg.thinkOn = true; cfg.thinkBudget = parseInt(v); }
 }
 function effortLabel(cfg){
   const kind = kindOf(cfg);
   if(!kind) return "—";
   if(kind==="anthropic"){
+    if(anthStyle(cfg.model)==="adaptive")
+      return (EFFORT_ADAPT.find(e=>e.v===cfg.effort) || EFFORT_ADAPT[0]).t;
     if(!cfg.thinkOn) return "关";
     const hit = EFFORT_ANTH.find(e=>e.v===String(cfg.thinkBudget));
     return hit ? hit.t : fmtN(cfg.thinkBudget);
@@ -2046,13 +2084,15 @@ function paintEffort(){
   }
   const anth = kind==="anthropic";
   const cur = effortCur(cfg, kind);
-  fillGrp($("#grpEffort"), (anth ? EFFORT_ANTH : EFFORT_DS).map(e=>({
+  fillGrp($("#grpEffort"), effortLadder(cfg, kind).map(e=>({
     title:e.t, sub:e.s, sel:e.v===cur, badge:e.b || (e.w?"更费额度":""), warn:!!e.w,
     on:()=>{ setEffort(cfg, kind, e.v); save(true); paintEffort(); refreshWin(); }
   })));
-  $("#noteEffort").innerHTML = anth
-    ? "思考的 token 算在输出里。「最大回复长度」会自动抬到预算之上，不用你操心。"
-    : "DeepSeek V4 <b>默认就开着、力度 high</b>，每条都在烧输出 token。别的 OpenAI 兼容服务可能不认这个参数，报错就调回「由模型定」。";
+  $("#noteEffort").innerHTML = !anth
+    ? "DeepSeek V4 <b>默认就开着、力度 high</b>，每条都在烧输出 token。别的 OpenAI 兼容服务可能不认这个参数，报错就调回「由模型定」。"
+    : anthStyle(cfg.model)==="adaptive"
+    ? "Claude 4.6 以后的模型按力度思考。<b>Opus 5.5 关不掉思考</b>，最省是「低」。思考的 token 算在输出里，「最大回复长度」会自动给思考留出余量，不用你操心。"
+    : "思考的 token 算在输出里。「最大回复长度」会自动抬到预算之上，不用你操心。";
 }
 
 /* ── channel list + editor ── */
@@ -2187,11 +2227,14 @@ async function testConn(){
   try{
     const t0 = performance.now();
     const res = await callAPI(ctx, [{role:"user",content:"回复两个字：在的"}],
-                              {maxTokens:32, stream:false, noThink:true});
+                              {maxTokens:32, stream:false, noThink:true, noCache:true});
     const ms = Math.round(performance.now()-t0);
     out(true, "通了（"+ms+"ms）。对面说：“"+res.text.trim().slice(0,40)+"”");
   }catch(e){ out(false, corsHint(e)); }
 }
+
+// room added to max_tokens for Claude 4.6+ thinking, by effort level — billed only if used
+const THINK_ROOM = {auto:16000, low:8000, medium:16000, high:32000, max:64000};
 
 // ctx = rt(cfg): the sending window's settings + the channel they point at
 function buildReq(ctx, msgs, opt){
@@ -2202,19 +2245,41 @@ function buildReq(ctx, msgs, opt){
   if(ch.kind==="anthropic"){
     const body = { model:cfg.model, max_tokens:maxTokens, messages:msgs, stream };
     if(sys) body.system = sys;
-    if(cfg.thinkOn && !opt.noThink){
+    const headers = { "content-type":"application/json", "x-api-key":ch.key,
+                      "anthropic-version":"2023-06-01",
+                      "anthropic-dangerous-direct-browser-access":"true" };
+    // Prompt cache: what was already sent (persona + earlier turns) costs about a tenth when it
+    // comes round again. Kept 1 hour, not the default 5 minutes — replies typed on a phone are
+    // often more than 5 minutes apart, and a miss bills the whole history at full price again.
+    // One-off calls (connection test, summary) skip it: nothing would read the entry back.
+    if(!opt.noCache) body.cache_control = { type:"ephemeral", ttl:"1h" };
+    const cv = claudeVer(cfg.model);
+    if(anthStyle(cfg.model)==="adaptive"){
+      // 4.6+: the effort level is the dial. Opus 5.5 thinks on every turn whatever we send,
+      // so one-off calls ask for "low" rather than trying to switch it off (that's a 400).
+      const eff = opt.noThink ? "low" : cfg.effort;
+      if(eff!=="auto") body.output_config = { effort:eff };
+      if(!opt.noThink && cfg.effort!=="auto"){
+        body.thinking = { type:"adaptive" };
+        // 4.6 shows its thinking anyway; from 4.7 on it comes back empty unless asked for
+        if(!(cv && cv.v>=4.6 && cv.v<4.7)) body.thinking.display = "summarized";
+      }
+      // thinking counts toward max_tokens even when it isn't shown — leave it room
+      body.max_tokens = Math.min(128000, maxTokens + THINK_ROOM[eff]);
+    }else if(cfg.thinkOn && !opt.noThink){
       const budget = Math.max(1024, cfg.thinkBudget|0);
       // max_tokens must leave room for the answer on top of the thinking budget
       body.max_tokens = Math.max(maxTokens, budget + 1024);
       body.thinking = { type:"enabled", budget_tokens:budget };
     }
-    return {
-      url:"https://api.anthropic.com/v1/messages",
-      headers:{ "content-type":"application/json", "x-api-key":ch.key,
-                "anthropic-version":"2023-06-01",
-                "anthropic-dangerous-direct-browser-access":"true" },
-      body
-    };
+    // Models whose safety filters can decline a turn (Opus 5 and up, Sonnet 5.5, Fable): let
+    // Anthropic re-run a declined turn on the model it recommends, instead of an empty reply.
+    if(cv && (cv.fam==="fable" || cv.fam==="mythos" || (cv.fam==="opus" && cv.v>=5) ||
+              (cv.fam==="sonnet" && cv.v>=5.5))){
+      body.fallbacks = "default";
+      headers["anthropic-beta"] = "server-side-fallback-2026-07-01";
+    }
+    return { url:"https://api.anthropic.com/v1/messages", headers, body };
   }
   const full = sys ? [{role:"system",content:sys}, ...msgs] : msgs;
   const body = { model:cfg.model, max_tokens:maxTokens, messages:full, stream };
@@ -2251,13 +2316,23 @@ function readUsage(kind, u){
   return { in:u.prompt_tokens|0, out:u.completion_tokens|0, hit };
 }
 
+// The fallback opt-in is a beta. If the API ever refuses it, send that turn once without it.
+function dropFallback(status, d, headers, body){
+  if(status!==400 || !body.fallbacks || !/fallback/i.test(d)) return false;
+  delete body.fallbacks; delete headers["anthropic-beta"];
+  return true;
+}
+
 async function callAPI(ctx, msgs, opt={}){
   const {url,headers,body} = buildReq(ctx, msgs, opt);
-  const r = await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal:opt.signal});
-  if(!r.ok){
-    let d=""; try{ d=(await r.text()).slice(0,500); }catch(_){}
-    throw new Error("HTTP "+r.status+"\n"+d);
-  }
+  const post = async ()=>{
+    const r = await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal:opt.signal});
+    let d=""; if(!r.ok){ try{ d=(await r.text()).slice(0,500); }catch(_){} }
+    return {r, d};
+  };
+  let {r, d} = await post();
+  if(!r.ok && dropFallback(r.status, d, headers, body)) ({r, d} = await post());
+  if(!r.ok) throw new Error("HTTP "+r.status+"\n"+d);
   const j = await r.json();
   const text = ctx.kind==="anthropic"
     ? (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("")
@@ -2278,6 +2353,7 @@ async function streamAPI(ctx, msgs, onDelta, onThink, signal, extra){
     delete body.stream_options;
     ({r, d} = await post());
   }
+  if(!r.ok && dropFallback(r.status, d, headers, body)) ({r, d} = await post());
   if(!r.ok) throw new Error("HTTP "+r.status+"\n"+d);
   const reader = r.body.getReader();
   const dec = new TextDecoder();
