@@ -298,7 +298,9 @@ input,textarea,select{font:inherit;color:inherit}
 .msg .who .acts button{font-size:11px;color:var(--fg-3);padding:1px 5px;border-radius:4px}
 .msg .who .acts button:hover{background:var(--bg-3);color:var(--fg)}
 .bubble{border-radius:var(--radius);padding:11px 15px;overflow-wrap:anywhere}
-.msg.user .bubble{background:var(--user-bg);color:var(--user-fg);align-self:flex-start;max-width:100%}
+/* textContent keeps the line breaks you typed; pre-wrap is what makes them show */
+.msg.user .bubble{background:var(--user-bg);color:var(--user-fg);align-self:flex-start;max-width:100%;
+  white-space:pre-wrap}
 /* “对白” in replies takes the palette's accent; 外观 → 不标 turns it off */
 .msg.ai .bubble .dq,.dq-demo .dq{color:var(--accent)}
 :root[data-dq="off"] .msg.ai .bubble .dq{color:inherit}
@@ -423,10 +425,28 @@ button.row:active{background:var(--bg-3)}
 .gact .st.ok{color:var(--ok)}
 .gact .st.bad{color:var(--danger)}
 .gact .mini{flex:0 0 auto}
+.mgrp .row.mi .rt,.fgrp .rt{overflow-wrap:anywhere}
+.row[hidden]{display:none}
+/* 常用: starred models across every channel, above the folds */
+.fgrp .rt{font-size:14px;font-weight:400}
+.fgrp .row.sel .rt{font-weight:500}
+.fhint{margin:12px 4px 14px}
+.mgrp .row.mfilter{padding-left:26px}
+.mgrp .row.mfilter input{font-size:14px}
+.mgrp .row.mfilter input::-webkit-search-decoration{display:none}
+/* the star is its own tap target inside a row */
+.star{flex:0 0 auto;width:36px;height:36px;margin:-9px -6px -9px 0;display:grid;place-items:center;
+  border-radius:10px;color:var(--fg-3);cursor:pointer}
+.star svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}
+.star:hover{color:var(--fg-2)}
+.star:active{background:var(--bg-3)}
+.star.on{color:var(--accent)}
+.star.on svg{fill:currentColor}
 .sh-foot{flex:0 0 auto;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px));
   border-top:1px solid var(--line);background:var(--bg)}
 @media (hover:none){ .rt{font-size:15.5px} .rs{font-size:12.5px}
-  .row{padding:15px 14px} .row.rowinput input,.row.rowinput textarea{font-size:16px} }
+  .row{padding:15px 14px} .row.rowinput input,.row.rowinput textarea{font-size:16px}
+  .mgrp .row.rowinput input{font-size:16px} .fgrp .rt{font-size:15px} }
 
 /* thinking block */
 .think{margin-bottom:10px;border:1px solid var(--line);border-radius:10px;
@@ -511,7 +531,10 @@ button.row:active{background:var(--bg-3)}
 .bspace{flex:1}
 #pop{position:fixed;z-index:40;background:var(--bg);border:1px solid var(--line-2);
   border-radius:14px;box-shadow:0 10px 34px rgba(0,0,0,.24);padding:6px;min-width:172px;
-  max-width:calc(100vw - 20px)}
+  max-width:calc(100vw - 20px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+#pop.pmodels{width:320px}
+#pop .pm{display:block;font-family:var(--mono);font-size:13px;overflow-wrap:anywhere;line-height:1.45}
+#pop .pc{display:block;font-size:11px;color:var(--fg-3);margin-top:2px;font-weight:400}
 #pop[hidden]{display:none}
 #pop .ph{font-size:11px;color:var(--fg-3);letter-spacing:.05em;padding:7px 11px 5px}
 #pop .pi{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;
@@ -604,7 +627,7 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 .row{display:flex;gap:10px}
 .row>*{flex:1;min-width:0}
 /* …but the sheet's grouped rows keep their trailing bits content-sized */
-.row>.chev,.row>.tick,.row>.rv,.row>.mini,.row>.swatch{flex:0 0 auto}
+.row>.chev,.row>.tick,.row>.rv,.row>.mini,.row>.swatch,.row>.star{flex:0 0 auto}
 .swatch{width:36px;height:36px;border-radius:11px;border:1px solid var(--line-2);
   background-size:cover;background-position:center}
 .row.srow{padding:10px 14px;gap:12px}
@@ -932,32 +955,132 @@ table.st input{width:74px;background:var(--bg-2);border:1px solid var(--line-2);
 <script>
 "use strict";
 
-/* ============ storage (defensive: never let a browser wipe be silent) ============ */
+/* ============ storage (defensive: never let a browser wipe be silent) ============
+   The archive lives in IndexedDB. It used to live in localStorage, which browsers cap at
+   about 5 MB, and long chats (with their thinking) filled that. IndexedDB's cap is a share
+   of the phone's free space instead.
+   The first load after the switch copies the localStorage archive across and reads the
+   copy back to check it. The old copy is removed only on a later load that finds the new
+   one intact. If IndexedDB won't open, everything runs the old way on localStorage. */
 const KEY = "xiaochuang.v1";
-let memFallback = null;          // used when localStorage is unavailable
-let storageOK = true;
+// a few hundred bytes of 外观 kept in localStorage, so the page paints in the right colours
+// in the moment before the archive has been read
+const LOOK_KEY = "xiaochuang.look";
+const IDB = { name:"xiaochuang", store:"kv", key:"state" };
+let backend = "idb";             // "idb" | "ls" (the old way) | "mem" (nothing sticks)
+let memFallback = null;
+let quotaHit = false;            // storage is full: keep trying, a later save may fit again
+let writeErr = false;            // a write failed for some other reason: same, keep trying
 
-function rawGet(){
-  if(!storageOK) return memFallback;
-  try{ return localStorage.getItem(KEY); }
-  catch(e){ storageOK = false; return memFallback; }
+const isQuota = e => !!e && (e.name==="QuotaExceededError" || e.code===22 || e.code===1014);
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+function lsWorks(){ try{ localStorage.getItem(KEY); return true; }catch(_){ return false; } }
+
+let idbConn = null;
+function idbOpen(){
+  return new Promise((ok, no)=>{
+    let o; try{ o = indexedDB.open(IDB.name, 1); }catch(e){ return no(e); }
+    o.onupgradeneeded = ()=>o.result.createObjectStore(IDB.store);
+    o.onerror = ()=>no(o.error);
+    o.onsuccess = ()=>{
+      const d = o.result;
+      // Safari drops the connection now and then (tab asleep, low memory): reopen next time
+      d.onclose = d.onversionchange = ()=>{ try{ d.close(); }catch(_){} if(idbConn===d) idbConn = null; };
+      ok(d);
+    };
+  });
 }
-let quotaHit = false;             // storage is full: keep trying, a later save may fit again
-function rawSet(v){
-  if(storageOK){
-    try{ localStorage.setItem(KEY, v); quotaHit = false; return true; }
-    catch(e){
-      memFallback = v;
-      if(e && (e.name==="QuotaExceededError" || e.code===22 || e.code===1014)){
-        if(!quotaHit) toast("浏览器存储写满了，最近的改动没存上——请立刻「导出备份」，再删掉些旧对话");
-        quotaHit = true; return false;
-      }
-      storageOK = false;
-      toast("浏览器存储写不进去了（可能满了或被禁用）——请立刻「导出备份」");
-      return false;
+function idbOnce(mode, fn){
+  return new Promise((ok, no)=>{
+    const tx = idbConn.transaction(IDB.store, mode);   // throws if the connection is gone
+    const q = fn(tx.objectStore(IDB.store));
+    tx.oncomplete = ()=>ok(q.result);
+    tx.onerror = tx.onabort = ()=>no(tx.error || new Error("IndexedDB 事务中断"));
+  });
+}
+async function idb(mode, fn){
+  for(let n=0;;n++){
+    try{
+      if(!idbConn) idbConn = await idbOpen();
+      return await idbOnce(mode, fn);
+    }catch(e){
+      if(isQuota(e) || n) throw e;
+      idbConn = null;                        // one retry, on a fresh connection
     }
   }
-  memFallback = v; return false;
+}
+const timeout = (p, ms)=>Promise.race([p, new Promise((_, no)=>setTimeout(()=>no(new Error("timeout")), ms))]);
+// every save stamps S.savedAt; it sits right at the front of the text
+const stampOf = raw => +((/"savedAt":(\d+)/.exec(raw.slice(0, 120)) || [])[1] || 0);
+
+// → the archive text, or null for a fresh start. Also settles which backend this load uses.
+let moved = false, idbHung = false;
+async function readArchive(){
+  const ls = lsGet(KEY);
+  let raw;
+  try{ raw = await timeout(idb("readonly", s=>s.get(IDB.key)), 8000); }
+  catch(e){
+    if(e && e.message==="timeout"){
+      // it may well hold the newest archive — don't write anything over it this time
+      console.warn("IndexedDB 迟迟打不开", e); idbHung = true; backend = "mem"; return ls;
+    }
+    console.warn("IndexedDB 打不开，改用 localStorage", e);
+    backend = lsWorks() ? "ls" : "mem";
+    return ls;
+  }
+  if(typeof raw!=="string") raw = null;
+  // localStorage wins only when IndexedDB has nothing yet, or when its copy is newer
+  // (written by a load that couldn't open IndexedDB)
+  if(ls && ls!==raw && (!raw || stampOf(ls) > stampOf(raw))){
+    try{
+      await idb("readwrite", s=>s.put(ls, IDB.key));
+      if(await idb("readonly", s=>s.get(IDB.key)) !== ls) throw new Error("搬过去读回来对不上");
+      moved = true;
+    }catch(e){
+      console.warn("搬进 IndexedDB 没成，这次照旧用 localStorage", e);
+      backend = "ls";
+    }
+    return ls;                               // localStorage keeps its copy for now
+  }
+  // IndexedDB holds the archive and it made it through a reload: the old copy can go
+  if(raw && ls){ try{ localStorage.removeItem(KEY); }catch(_){} }
+  return raw;
+}
+
+// IndexedDB writes are async: only the newest state ever waits, older ones are skipped
+let idbNext = null, idbBusy = false;
+function rawSet(v){
+  if(backend==="idb"){ idbNext = v; if(!idbBusy) idbDrain(); return; }
+  memFallback = v;
+  if(backend!=="ls") return;
+  try{ localStorage.setItem(KEY, v); quotaHit = false; }
+  catch(e){
+    if(isQuota(e)){
+      if(!quotaHit) toast("浏览器存储写满了，最近的改动没存上——请立刻「导出备份」，再删掉些旧对话");
+      quotaHit = true; return;
+    }
+    backend = "mem";
+    toast("浏览器存储写不进去了（可能满了或被禁用）——请立刻「导出备份」");
+  }
+}
+async function idbDrain(){
+  idbBusy = true;
+  while(idbNext!==null){
+    const v = idbNext; idbNext = null;
+    try{ await idb("readwrite", s=>s.put(v, IDB.key)); quotaHit = writeErr = false; }
+    catch(e){
+      memFallback = v;
+      if(isQuota(e)){
+        if(!quotaHit) toast("手机存储空间不够了，最近的改动没存上——请立刻「导出备份」，再删掉些旧对话");
+        quotaHit = true;
+      }else{
+        if(!writeErr) toast("存档这次没写进去（"+String(e && e.message || e).slice(0,40)+"）——下次改动会再试，保险起见先「导出备份」");
+        writeErr = true;
+      }
+    }
+  }
+  idbBusy = false;
+  paintStore();
 }
 
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -1021,7 +1144,8 @@ function normWall(w){
 }
 const DEFAULTS = {
   ver:2,
-  channels:[],       // {id, name, kind:"anthropic"|"openai", baseURL, key, models:[]}
+  savedAt:0,         // stamped on every save; keep it second, stampOf() reads it off the front
+  channels:[],       // {id, name, kind:"anthropic"|"openai", baseURL, key, models:[], favs:[]}
   winDef:structuredClone(BASE_CFG),
   theme:"auto",
   palette:"warm",
@@ -1034,14 +1158,15 @@ const DEFAULTS = {
   convs:[],
   activeId:null
 };
-function load(){
+function load(raw){
   let p;
   try{
-    const raw = rawGet();
     if(!raw) return structuredClone(DEFAULTS);
     p = JSON.parse(raw);
   }catch(e){
-    console.warn("存档解析失败，起用空档", e);
+    // don't save an empty archive over one that only failed to read
+    console.error("存档解析失败", e);
+    parseFailed = true; backend = "mem";
     return structuredClone(DEFAULTS);
   }
   try{
@@ -1051,7 +1176,7 @@ function load(){
     // Never let a failed upgrade overwrite the old archive: stop writing to storage
     // for this session, so the original stays exactly as it was.
     console.error("存档升级失败", e);
-    upgradeFailed = true; memFallback = JSON.stringify(DEFAULTS); storageOK = false;
+    upgradeFailed = true; backend = "mem";
     return structuredClone(DEFAULTS);
   }
 }
@@ -1118,7 +1243,9 @@ function normCh(x){
     name: (typeof x.name==="string" && x.name.trim()) || guessName(kind, baseURL),
     kind, baseURL,
     key: typeof x.key==="string" ? x.key.trim() : "",
-    models: Array.isArray(x.models) ? x.models.filter(m=>typeof m==="string" && m) : []
+    models: Array.isArray(x.models) ? x.models.filter(m=>typeof m==="string" && m) : [],
+    // 常用: starred by hand. Kept apart from models, which 拉列表 replaces wholesale.
+    favs: Array.isArray(x.favs) ? [...new Set(x.favs.filter(m=>typeof m==="string" && m))] : []
   };
 }
 function guessName(kind, base){
@@ -1148,32 +1275,77 @@ function cfgLabel(cfg){
   return (ch ? ch.name : "未设通道")+" · "+(cfg.model || "未设模型");
 }
 
-// load only after every helper above exists (consts are not hoisted)
-let upgradeFailed = false, upgraded = false;
-let S = load();
-let saveTimer = null;
+let upgradeFailed = false, upgraded = false, parseFailed = false;
+// The archive is read asynchronously at boot (see the end of the script). Until then S holds
+// the defaults plus the 外观 cache, and save() does nothing, so it can't overwrite the archive.
+let booted = false;
+let S = structuredClone(DEFAULTS);
+try{
+  const l = JSON.parse(lsGet(LOOK_KEY));
+  if(l && typeof l==="object") ["theme","palette","font","quoteHi","wall"].forEach(k=>{ if(k in l) S[k] = l[k]; });
+}catch(_){}
+tidy(S);
+
+/* alts[bi] is the branch currently spliced into msgs (see "branches"). It is re-snapshotted
+   before anything reads it, so writing it out would only store that whole tail a second time
+   (and, with forks inside forks, again for every level). */
+function lean(k, v){
+  return k==="alts" && Array.isArray(v) && Number.isInteger(this.bi) ? v.map((t,i)=>i===this.bi ? [] : t) : v;
+}
+let saveTimer = null, dirty = false, storeBytes = 0, lookRaw = null;
 function save(now){
-  clearTimeout(saveTimer);
-  const go = ()=>{ rawSet(JSON.stringify(S)); paintStore(); };
+  if(!booted) return;
+  clearTimeout(saveTimer); dirty = true;
+  const go = ()=>{
+    dirty = false;
+    S.savedAt = Date.now();
+    const raw = JSON.stringify(S, lean);
+    storeBytes = new Blob([raw]).size;
+    rawSet(raw); saveLook(); paintStore();
+  };
   if(now) go(); else saveTimer = setTimeout(go, 260);
 }
+function saveLook(){
+  const v = JSON.stringify({theme:S.theme, palette:S.palette, font:S.font, quoteHi:S.quoteHi, wall:S.wall});
+  if(v===lookRaw) return;
+  try{ localStorage.setItem(LOOK_KEY, v); lookRaw = v; }catch(_){}
+}
+// a phone can put the tab away at any moment: write out a save that is still waiting
+addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden" && dirty) save(true); });
+addEventListener("pagehide", ()=>{ if(dirty) save(true); });
 
+function fmtBytes(n){
+  if(n<1024) return n+" B";
+  if(n<1024*1024) return (n/1024).toFixed(0)+" KB";
+  if(n<1024**3) return (n/1024/1024).toFixed(1)+" MB";
+  return (n/1024**3).toFixed(1)+" GB";
+}
+let storeRoom = 0;                // what the browser says this page may still use (IndexedDB only)
 function paintStore(){
   const el = document.getElementById("storeFill");
   const tx = document.getElementById("storeTxt");
   const bar= document.getElementById("storeBar");
-  if(!storageOK){
+  if(backend==="mem"){
     tx.textContent = "⚠ 存储不可用，只在内存里";
     bar.classList.add("warn"); el.style.width = "100%"; return;
   }
-  const bytes = new Blob([JSON.stringify(S)]).size;
-  const cap = 5*1024*1024;
-  const pct = Math.min(100, bytes/cap*100);
+  const bytes = storeBytes, sz = fmtBytes(bytes);
+  // the old 5 MB box fills up visibly; IndexedDB's room is usually gigabytes, so the bar stays thin
+  const cap = backend==="ls" ? 5*1024*1024 : bytes + storeRoom;
+  const pct = cap ? Math.min(100, bytes/cap*100) : 0;
   el.style.width = pct.toFixed(1)+"%";
   bar.classList.toggle("warn", pct>75);
-  const kb = bytes<1024 ? bytes+" B" : (bytes/1024).toFixed(0)+" KB";
-  if(quotaHit){ bar.classList.add("warn"); tx.textContent = "⚠ 存满了，最近的改动没存上 · "+kb; return; }
-  tx.textContent = "存储 "+kb+(pct>75 ? " · 该导出备份了" : "");
+  if(quotaHit){ bar.classList.add("warn"); tx.textContent = "⚠ 存满了，最近的改动没存上 · "+sz; return; }
+  if(writeErr){ bar.classList.add("warn"); tx.textContent = "⚠ 最近的改动没存上 · "+sz; return; }
+  if(backend==="ls"){ tx.textContent = "存储 "+sz+(pct>75 ? " · 该导出备份了" : " / 5 MB"); return; }
+  tx.textContent = "存储 "+sz+(storeRoom ? " · 还能放约 "+fmtBytes(storeRoom) : "");
+}
+async function measureRoom(){
+  try{
+    const e = await navigator.storage.estimate();
+    if(e && e.quota) storeRoom = Math.max(0, e.quota - (e.usage||0));
+  }catch(_){}
+  paintStore();
 }
 
 /* ============ tiny markdown (inline, no CDN, offline-safe) ============ */
@@ -1353,6 +1525,7 @@ const $ = s => document.querySelector(s);
 
 function active(){ return S.convs.find(c=>c.id===S.activeId) || null; }
 function newConv(){
+  if(!booted) return;
   closePop();
   const c = { id:uid(), title:"新的对话", msgs:[], ts:Date.now(), cfg:normCfg(S.winDef) };
   S.convs.unshift(c); S.activeId = c.id; save(); renderAll(); $("#input").focus();
@@ -1682,13 +1855,16 @@ function paintTop(){
 }
 
 /* ── little popup above the toolbar ── */
-function closePop(){ const e=$("#pop"); e.hidden=true; e.innerHTML=""; }
+function closePop(){ const e=$("#pop"); e.hidden=true; e.innerHTML=""; e.className=""; }
 function openPop(build, anchor){
   const pop = $("#pop");
   if(!pop.hidden && pop.dataset.from===anchor.id) return closePop();
-  pop.innerHTML=""; pop.hidden=false; pop.dataset.from=anchor.id;
+  const r = anchor.getBoundingClientRect();
+  pop.innerHTML=""; pop.className=""; pop.hidden=false; pop.dataset.from=anchor.id;
+  // a long list scrolls inside the popup instead of running off the top of the screen
+  pop.style.maxHeight = Math.max(160, r.top - 18)+"px";
   build(pop);
-  const r = anchor.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+  const pr = pop.getBoundingClientRect();
   let left = Math.min(r.left, innerWidth - pr.width - 10);
   pop.style.left = Math.max(10, left)+"px";
   pop.style.top  = Math.max(10, r.top - pr.height - 8)+"px";
@@ -1714,6 +1890,27 @@ function popEffort(pop){
     };
     pop.appendChild(b);
   });
+}
+// 常用 models, one tap away from the composer. 全部模型… opens the full picker.
+function popModels(pop){
+  const cfg = curCfg(), favs = favList();
+  pop.className = "pmodels";
+  const h=document.createElement("div"); h.className="ph"; h.textContent="常用模型 · 这个窗口"; pop.appendChild(h);
+  const multi = new Set(favs.map(f=>f.ch)).size>1;
+  favs.forEach(({ch, id})=>{
+    const b=document.createElement("button");
+    b.className="pi"+(cfg.ch===ch.id && cfg.model===id ? " on" : "");
+    b.innerHTML='<span class="pk"><span class="pm"></span><span class="pc"></span></span><span class="pt">✓</span>';
+    b.querySelector(".pm").textContent = id;
+    if(multi) b.querySelector(".pc").textContent = ch.name;
+    else b.querySelector(".pc").remove();
+    b.onclick = ()=>{ setModel(cfg, ch, id); closePop(); refreshWin(); toast("模型 · "+id); };
+    pop.appendChild(b);
+  });
+  const all=document.createElement("button"); all.className="pi pact";
+  all.innerHTML='<span class="pk">全部模型…</span>';
+  all.onclick = ()=>{ closePop(); openPicker(); };
+  pop.appendChild(all);
 }
 function popTokens(pop){
   const c = active();
@@ -1809,6 +2006,18 @@ function mkRow(o){
   w.appendChild(t);
   if(o.sub){ const d=document.createElement("div"); d.className="rs"; d.textContent=o.sub; w.appendChild(d); }
   b.appendChild(w);
+  if(o.data) Object.assign(b.dataset, o.data);
+  // o.star = {on, toggle(row)}: its own tap target inside the row, so it doesn't also pick
+  if(o.star){
+    const s = document.createElement("span");
+    s.className = "star"+(o.star.on ? " on" : "");
+    s.setAttribute("role","button");
+    s.setAttribute("aria-pressed", o.star.on ? "true" : "false");
+    s.setAttribute("aria-label", o.star.on ? "从常用里拿掉" : "收进常用");
+    s.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 3.6l2.55 5.17 5.7.83-4.13 4.02.98 5.68L12 16.62l-5.1 2.68.98-5.68L3.75 9.6l5.7-.83z"/></svg>';
+    s.onclick = e=>{ e.stopPropagation(); o.star.toggle(b); };
+    b.appendChild(s);
+  }
   if(o.chev){
     const c = document.createElement("span"); c.className = "chev"; c.textContent = "›";
     b.appendChild(c);
@@ -2013,8 +2222,15 @@ function paintDefs(){
   $("#dRowEffortVal").textContent = effortLabel(S.winDef);
 }
 
-/* ── model picker: 总 = a channel row that folds open, 分 = its models ── */
+/* ── model picker: 常用 on top, then 总 = a channel row that folds open, 分 = its models ── */
 let openChs = new Set();
+let mdlQuery = {};                  // channel id → what is typed in its filter box
+const FILTER_AT = 10;               // a channel with more models than this gets a filter box
+function favList(){
+  const out = [];
+  S.channels.forEach(ch=>ch.favs.forEach(id=>out.push({ch, id})));
+  return out;
+}
 function paintModels(){
   const cfg = tgtCfg(), box = $("#mdlList");
   box.innerHTML = "";
@@ -2022,6 +2238,24 @@ function paintModels(){
     const g = document.createElement("div"); g.className = "grp";
     g.appendChild(noteRow("还没有通道。点下面「新增通道」，填上接口地址和 Key，它的模型就会列在这儿。"));
     box.appendChild(g); return;
+  }
+  const label = t=>Object.assign(document.createElement("div"), {className:"sh-label", textContent:t});
+  const favs = favList(), multi = S.channels.length>1;
+  if(favs.length){
+    const g = document.createElement("div"); g.className = "grp fgrp";
+    favs.forEach(({ch, id})=>{
+      // 拉列表 brought back a list without it: maybe renamed or retired — it stays until unstarred
+      const gone = ch.models.length && !ch.models.includes(id);
+      g.appendChild(mkRow({ title:id, sub:[multi ? ch.name : "", modelNote(id)].filter(Boolean).join(" · "),
+        badges: gone ? [{t:"新列表里没有", warn:true}] : [],
+        sel: cfg.ch===ch.id && cfg.model===id, on:()=>pickModel(ch, id),
+        star:{on:true, toggle:el=>toggleFav(ch, id, el)} }));
+    });
+    box.append(label("常用"), g, label("全部"));
+  }else{
+    const n = document.createElement("div"); n.className = "sh-note lead fhint";
+    n.textContent = "点模型右边的 ☆ 收进「常用」：常用的会排在这页最上面，输入框下面点模型名也能直接切。";
+    box.appendChild(n);
   }
   S.channels.forEach(ch=>{
     const open = openChs.has(ch.id), using = cfg.ch===ch.id;
@@ -2035,8 +2269,40 @@ function paintModels(){
       const list = ch.models.slice();
       if(using && cfg.model && !list.includes(cfg.model)) list.unshift(cfg.model);
       if(!list.length) g.appendChild(noteRow("还没拉过模型列表 —— 点「拉列表」，或者在下面直接打型号 ID。", "mi"));
-      list.forEach(id=>g.appendChild(mkRow({ title:id, sub:modelNote(id), cls:"mi",
-        sel: using && cfg.model===id, on:()=>pickModel(ch, id) })));
+
+      let fi = null, none = null;
+      if(list.length>FILTER_AT){
+        const f = document.createElement("div"); f.className = "row rowinput mfilter";
+        fi = document.createElement("input"); fi.type = "search";
+        fi.placeholder = "搜这 "+list.length+" 个模型"; fi.spellcheck = false;
+        fi.setAttribute("autocapitalize","off"); fi.setAttribute("autocorrect","off");
+        fi.value = mdlQuery[ch.id] || "";
+        f.appendChild(fi); g.appendChild(f);
+      }
+      const rows = list.map(id=>{
+        const row = mkRow({ title:id, sub:modelNote(id), cls:"mi", data:{ch:ch.id, id},
+          sel: using && cfg.model===id, on:()=>pickModel(ch, id),
+          star:{on:ch.favs.includes(id), toggle:el=>toggleFav(ch, id, el)} });
+        g.appendChild(row); return row;
+      });
+      if(fi){
+        none = noteRow("没有对得上的。要用的型号不在列表里，就在下面直接打。", "mi"); g.appendChild(none);
+        const apply = ()=>{
+          const q = fi.value.trim().toLowerCase(); let n = 0;
+          mdlQuery[ch.id] = fi.value;
+          rows.forEach(r=>{ const hit = !q || r.dataset.id.toLowerCase().includes(q); r.hidden = !hit; if(hit) n++; });
+          none.hidden = n>0;
+        };
+        fi.addEventListener("input", apply);
+        // Enter on a filter that leaves exactly one model picks it
+        fi.addEventListener("keydown", e=>{
+          if(e.key!=="Enter" || e.isComposing) return;
+          e.preventDefault();
+          const vis = rows.filter(r=>!r.hidden);
+          if(vis.length===1) pickModel(ch, vis[0].dataset.id);
+        });
+        apply();
+      }
 
       const r = document.createElement("div"); r.className = "row rowinput";
       const inp = document.createElement("input");
@@ -2059,15 +2325,31 @@ function paintModels(){
     box.appendChild(g);
   });
 }
-function pickModel(ch, id){
-  const cfg = tgtCfg();
+// ☆ / ★. Starring adds or removes a row in 常用 above, which would shove the list you are
+// in up or down — so the tapped row is kept where it was on screen.
+function toggleFav(ch, id, el){
+  const inList = el && el.closest(".mgrp");
+  const y0 = inList ? el.getBoundingClientRect().top : 0;
+  const i = ch.favs.indexOf(id);
+  if(i<0) ch.favs.push(id); else ch.favs.splice(i, 1);
+  save(true); paintModels();
+  if(inList){
+    const same = [...$("#mdlList").querySelectorAll(".mgrp .row.mi")]
+      .find(r=>r.dataset.ch===ch.id && r.dataset.id===id);
+    if(same) $(".sh-body").scrollTop += same.getBoundingClientRect().top - y0;
+  }
+  toast(i<0 ? "★ 收进常用了" : "从常用里拿掉了");
+}
+// point a cfg at a channel + model
+function setModel(cfg, ch, id){
   cfg.ch = ch.id; cfg.model = id;
   // a default with no model is no use to the next window — seed it from this pick
   if(cfg!==S.winDef && !S.winDef.model && (!chOf(S.winDef) || S.winDef.ch===ch.id)){
     S.winDef.ch = ch.id; S.winDef.model = id;
   }
-  save(true); paintModels(); refreshWin();
+  save(true);
 }
+function pickModel(ch, id){ setModel(tgtCfg(), ch, id); paintModels(); refreshWin(); }
 const stOut  = el => (ok,msg)=>{ el.className = "st"+(ok===true?" ok":ok===false?" bad":""); el.textContent = msg; };
 const boxOut = el => (ok,msg)=>{
   el.className = "out on"+(ok===true?" ok":ok===false?" bad":"");
@@ -2107,7 +2389,7 @@ function paintChans(){
 }
 let editCh = null, editKind = "openai";
 function openChEdit(ch){
-  editCh = ch || { id:uid(), name:"", kind:"openai", baseURL:"", key:"", models:[] };
+  editCh = ch || { id:uid(), name:"", kind:"openai", baseURL:"", key:"", models:[], favs:[] };
   editKind = editCh.kind;
   $("#cName").value = ch ? ch.name : "";
   $("#cBase").value = editCh.baseURL;
@@ -2501,6 +2783,7 @@ function setSendState(on){
 }
 
 function submit(){
+  if(!booted) return;
   if(streaming){ ctl?.abort(); return; }
   const el = $("#input"); const txt = el.value.trim();
   if(!txt) return;
@@ -2516,7 +2799,7 @@ function doExport(){
   const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
   const dump = structuredClone(S);
   dump.channels.forEach(ch=>ch.key = "");          // never bake a key into a backup file
-  const blob = new Blob([JSON.stringify(dump,null,2)],{type:"application/json"});
+  const blob = new Blob([JSON.stringify(dump,lean,2)],{type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "小窗备份-"+stamp+".json";
@@ -2543,6 +2826,7 @@ function doImport(file){
         if(hit){
           claimed.add(hit.id);
           if(!hit.models.length && b.models.length) hit.models = b.models;
+          b.favs.forEach(m=>{ if(!hit.favs.includes(m)) hit.favs.push(m); });
           return hit.id;
         }
         b.key = ""; S.channels.push(b); claimed.add(b.id); born++; return b.id;
@@ -2821,6 +3105,7 @@ function applyWall(){
   mineTried = true;
   wallGet().then(blob=>{
     if(blob){ mineURL = URL.createObjectURL(blob); if(S.wall.mine && S.wall.mine.v!==2) rescanMine(); }
+    else if(!booted){ mineTried = false; return; }    // S is still the 外观 cache: ask again after boot
     else{ S.wall.mine = null; if(S.wall.src==="custom") S.wall.src = "none"; save(true); }  // e.g. a restored backup
     applyWall();
   }).catch(()=>{});                       // storage blocked (private mode): just no picture
@@ -2887,6 +3172,7 @@ function goPicker(tgt, title){
   shTgt = tgt;
   const cfg = tgtCfg();
   openChs = new Set(chOf(cfg) ? [cfg.ch] : S.channels.length===1 ? [S.channels[0].id] : []);
+  mdlQuery = {};
   shGo("model", title);
 }
 function goEffort(tgt, title){ shTgt = tgt; shGo("effort", title); }
@@ -2952,7 +3238,14 @@ $("#btnTest").onclick = testConn;
 $("#bThink").onclick = e=>{ e.stopPropagation(); if(!active()) newConv(); openPop(popEffort, $("#bThink")); };
 $("#bTok").onclick   = e=>{ e.stopPropagation(); openPop(popTokens, $("#bTok")); };
 $("#bSet").onclick   = openSet;
-$("#bModel").onclick = ()=>{ if(!active()) newConv(); openPicker(); };
+// with something in 常用 the model button opens a quick list; with nothing starred yet, the picker
+$("#bModel").onclick = e=>{
+  e.stopPropagation();
+  if(!booted) return;
+  if(!active()) newConv();
+  if(!favList().length) return openPicker();
+  openPop(popModels, $("#bModel"));
+};
 document.addEventListener("pointerdown", e=>{
   if(!$("#pop").hidden && !e.target.closest("#pop") && !e.target.closest(".bic")) closePop();
 }, true);
@@ -3033,12 +3326,29 @@ $("#main").addEventListener("pointerdown", e=>{
   if(narrow() && !$("#side").classList.contains("hidden")) $("#side").classList.add("hidden");
 }, true);
 addEventListener("resize", ()=>{ if(!narrow()) $("#side").classList.remove("hidden"); });
-applyTheme();
-if(upgraded) save(true);             // settle the new layout (and its channel ids) right away
-if(!S.convs.length) newConv(); else renderAll();
+applyTheme();                        // from the 外观 cache, before the archive is in
 autoSize();
-if(upgradeFailed) toast("旧存档升级出错了：原来的记录一个字没动，这次先不往里写。别清浏览器数据，把情况告诉开发者");
-else if(!storageOK) toast("这个浏览器不让本地存储——记录只在内存里，关页面就没了，请常导出");
+(async ()=>{
+  const raw = await readArchive();
+  S = load(raw);
+  storeBytes = raw ? new Blob([raw]).size : 0;
+  booted = true;
+  applyTheme();
+  // settle a new layout (v1 → channels, or the move into IndexedDB) right away
+  if(upgraded || moved) save(true);
+  if(!S.convs.length) newConv(); else renderAll();
+  if(backend==="idb"){
+    measureRoom();
+    // ask the browser not to clear this page's storage when the phone runs low
+    try{ navigator.storage.persist().catch(()=>{}); }catch(_){}
+  }
+  if(upgradeFailed) toast("旧存档升级出错了：原来的记录一个字没动，这次先不往里写。别清浏览器数据，把情况告诉开发者");
+  else if(parseFailed) toast("存档读不出来：原来的记录一个字没动，这次先不往里写。别清浏览器数据，把情况告诉开发者");
+  else if(idbHung) toast("本地存储这次迟迟打不开：记录没丢，但这次的改动不会存。刷新一下页面再用");
+  else if(backend==="mem") toast("这个浏览器不让本地存储——记录只在内存里，关页面就没了，请常导出");
+  else if(backend==="ls") toast("这次没打开 IndexedDB，先用老的本地存储（上限约 5 MB）");
+  else if(moved) toast("存档已经搬到更大的地方了，不再卡 5 MB");
+})();
 </script>
 </body>
 </html>
